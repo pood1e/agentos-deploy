@@ -13,7 +13,7 @@ for scenario in .cache/check .cache/check/telemetry; do
   HELM_PLUGINS="$PWD/playbooks/deploy/helm-plugins" \
     AGENTOS_KUSTOMIZE_OVERLAY="$PWD/playbooks/deploy/kustomize/kagent" \
     AGENTOS_PATCHED_IMAGE="$(pin kagent_controller_image)" \
-    helm template kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent --post-renderer agentos-kustomize \
+    helm template kagent oci://ghcr.io/pood1e/kagent/helm/kagent --post-renderer agentos-kustomize \
     --version "$(pin kagent_version)" --namespace agentos -f "$scenario/kagent-values.yaml" > "$scenario/native-kagent.yaml"
   conftest test --combine --policy tests/policies --namespace runtime_tests \
     --data .cache/check/test-data.json "$scenario/kagent-values.yaml" \

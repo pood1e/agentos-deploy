@@ -234,7 +234,7 @@
     - name: Install kagent CRDs
       kubernetes.core.helm:
         name: kagent-crds
-        chart_ref: oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds
+        chart_ref: oci://ghcr.io/pood1e/kagent/helm/kagent-crds
         chart_version: "{{ kagent_version }}"
         release_namespace: "{{ agentos_namespace }}"
         create_namespace: true
@@ -268,7 +268,7 @@
     - name: Install kagent
       kubernetes.core.helm:
         name: kagent
-        chart_ref: oci://ghcr.io/kagent-dev/kagent/helm/kagent
+        chart_ref: oci://ghcr.io/pood1e/kagent/helm/kagent
         chart_version: "{{ kagent_version }}"
         release_namespace: "{{ agentos_namespace }}"
         release_values: "{{ lookup('template', 'values/kagent.yaml.j2') | from_yaml }}"
