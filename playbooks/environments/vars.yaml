@@ -40,9 +40,9 @@ environment_release: agentos-environment
 connections_release: "{{ platform_release }}-connections"
 environment_chart_repository: "oci://{{ agentos_image_registry }}/charts"
 environment_chart_version: "{{ delivery_version }}"
-agentgateway_version: v1.6.0
+agentgateway_version: v1.7.0
 gateway_charts:
   - name: agentgateway
-    checksum: 4a0064af58aabe04b4a9fedc08349028dc0d0eb4dc5eb15f9a26ebbcdb6360cf
+    checksum: 00c63256acd5c4305b2e7eab1da56c3e3a35a74a8f04e34aca58641dfdbc6037
   - name: agentgateway-crds
-    checksum: 49e4c65fb8b1119305a64af3b1f2229d31340e8af448d6b34dbf5a5360d25560
+    checksum: abf0327cd44f89bc263d86f155db4094166cb2e6b920805bcf879d426ecd6d91

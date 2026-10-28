@@ -53,7 +53,7 @@
         release_values:
           controller:
             image:
-              tag: v1.6.0@sha256:d84259a7e2d87f8f39bae385d4b032d823c0a4450aecb32e0e31e2258449645b
+              tag: v1.7.0@sha256:87c1363bf0cbc7fdb375866e592294114c8763097d2d0c9fc45fcb1fe00a4ab8
           rbac:
             gatewayNamespaces: ["{{ agentos_namespace }}"]
           discoveryNamespaceSelectors:
