@@ -65,6 +65,8 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 应用部署将 Substrate 当前 live Service DNS ClusterTrustBundle 发布为平台命名空间的 `substrate-service-dns-ca` ConfigMap，供 agentgateway 直接验证 Actor JWKS HTTPS 端点。Service DNS 根轮换时执行 `agentos.platform.install --tags app` 同步信任；轮换期间保留覆盖现有服务证书的根。Actor 签名公钥由原生 JWKS 端点发布，刷新由 agentgateway 管理。
 
+原生 kagent API 的 NetworkPolicy 允许同命名空间的业务网关、平台 API/dataplane 与 controller 访问，策略随原生 kagent release 管理。站点保留 K3s 内置的 NetworkPolicy 控制器。
+
 ```yaml
 kagent_telemetry:
   traces: {endpoint: 'https://otlp.example.com:4317', protocol: grpc, timeout: 5s}
