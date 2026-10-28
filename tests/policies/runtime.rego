@@ -32,6 +32,8 @@ deny contains "the controller watches an unrelated namespace" if kagent.global.w
 
 deny contains "runtime persistence must use the native controller" if native_config.runtimeDefaults.controlPlaneUrl != "http://kagent-controller.agentos.svc.cluster.local:8083"
 
+deny contains "native Agent cards must advertise the public API origin" if native_config.runtimeDefaults.gatewayUrl != "https://api.example.test"
+
 deny contains "the controller lacks its native Substrate client certificate" if kagent.controller.substrateClientCertificate.enabled != true
 
 deny contains "global image pull secrets mutate immutable initialization Jobs" if object.get(substrate, "imagePullSecrets", []) != []

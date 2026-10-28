@@ -3,6 +3,8 @@
   connection: local
   gather_facts: false
   vars_files: [vars.yaml]
+  environment:
+    HELM_PLUGINS: "{{ agentos_cache }}/helm-plugins"
   tasks:
     - name: Create Helm cache
       ansible.builtin.file:

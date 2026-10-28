@@ -9,6 +9,8 @@
   connection: local
   gather_facts: false
   vars_files: [vars.yaml]
+  environment:
+    HELM_PLUGINS: "{{ agentos_cache }}/helm-plugins"
   vars:
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
     harness_defaults: "{{ (lookup('file', playbook_dir ~ '/../charts/agentos/values.yaml') | from_yaml).harnesses }}"
@@ -112,6 +114,7 @@
       vars:
         ansible_python_interpreter: /usr/bin/python3
       delegate_to: "{{ agentos_node }}"
+      connection: ssh
       become: true
       loop: "{{ identity_state.results }}"
       when: item.resources | length == 0
@@ -139,6 +142,7 @@
             pool = json.loads(base64.b64decode(secret['data']['pool']))
             print(ssl.DER_cert_to_PEM_cert(base64.b64decode(pool['CAs'][0]['RootCertificateDER'])))
       delegate_to: "{{ agentos_node }}"
+      connection: ssh
       become: true
       changed_when: false
       register: actor_root
@@ -163,6 +167,7 @@
       ansible.builtin.command:
         argv: [/usr/local/bin/k3s, kubectl, get, --raw, /.well-known/openid-configuration]
       delegate_to: "{{ agentos_node }}"
+      connection: ssh
       become: true
       changed_when: false
       register: issuer_document
@@ -195,6 +200,7 @@
       ansible.builtin.command:
         argv: [/usr/local/bin/k3s, kubectl, wait, deployment, --all, -n, ate-system, --for=condition=Available, --timeout=600s]
       delegate_to: "{{ agentos_node }}"
+      connection: ssh
       become: true
       changed_when: false
       vars:
@@ -214,6 +220,7 @@
         KUBECONFIG: /etc/rancher/k3s/k3s.yaml
         ATE_CLIENT_SERVICE_ACCOUNT: agentos-substrate-operator
       delegate_to: "{{ agentos_node }}"
+      connection: ssh
       become: true
       register: native_access_policies
       changed_when: (native_access_policies.stdout | from_json).changed
@@ -226,16 +233,23 @@
         argv: [/usr/local/bin/k3s, kubectl, rollout, status, "deployment/{{ item }}", -n, ate-system, --timeout=300s]
       loop: [ate-api-server, atenet-egress, atenet-router]
       delegate_to: "{{ agentos_node }}"
+      connection: ssh
       become: true
       changed_when: false
       vars:
         ansible_python_interpreter: /usr/bin/python3
 
+    - name: Prepare native runtime charts
+      ansible.builtin.include_tasks:
+        file: tasks/runtime-charts.yaml
+        apply:
+          tags: [kagent]
+      tags: [kagent]
+
     - name: Install kagent CRDs
       kubernetes.core.helm:
         name: kagent-crds
-        chart_ref: oci://ghcr.io/pood1e/kagent/helm/kagent-crds
-        chart_version: "{{ kagent_version }}"
+        chart_ref: "{{ agentos_cache }}/runtime/kagent-crds-{{ kagent_runtime_version }}.tgz"
         release_namespace: "{{ agentos_namespace }}"
         create_namespace: true
         wait: true
@@ -268,8 +282,7 @@
     - name: Install kagent
       kubernetes.core.helm:
         name: kagent
-        chart_ref: oci://ghcr.io/pood1e/kagent/helm/kagent
-        chart_version: "{{ kagent_version }}"
+        chart_ref: "{{ agentos_cache }}/runtime/kagent-{{ kagent_runtime_version }}.tgz"
         release_namespace: "{{ agentos_namespace }}"
         release_values: "{{ lookup('template', 'values/kagent.yaml.j2') | from_yaml }}"
         post_renderer: agentos-kustomize

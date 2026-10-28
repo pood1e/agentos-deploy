@@ -26,8 +26,12 @@ substrate_version: 0.6.0-alpha3
 substrate_api_image: ghcr.io/pood1e/substrate/ateapi@sha256:6e8cd18cac1bff56481a5f17d96e4b775383b74464a74fd4a89cda410554ab5c
 substrate_microvm_image: ghcr.io/pood1e/substrate/ateworker-microvm@sha256:982fbf9365a2de90538048287f3df4184d05d7cb7ae271edb349d23c1110609e
 kubectl_ate_checksum: sha256:bbebe540531aa0cd6b436b2f6a0665eca82feba2cb4942bb3e3f997c3c9c4ad1
-kagent_version: 1.0.0-alpha17-agentos.7
 kagent_runtime_version: 1.0.0-alpha17-agentos.7
+kagent_charts:
+  - name: kagent
+    checksum: 715aaf9f854ca1466867b4aa75355202bfebd1183355c927aac8500d949e8cf8
+  - name: kagent-crds
+    checksum: 24cf38a5cb156eb7b0e3fed7738b8535df2de58cce25633ad1e4f934a9deeefe
 kagent_controller_image: ghcr.io/pood1e/kagent/controller@sha256:17a9494305fdca3feeef233e094ad31ce4f2aa8c22094e780361f3dd07ae8a2a
 kubeconfig_path: "{{ agentos_cache }}/kubeconfig.yaml"
 helm_binary: "{{ agentos_cache }}/helm/linux-amd64/helm"
@@ -36,7 +40,6 @@ cloudflare_token_file: ""
 model_key_file: ""
 identity_client_secret_file: ""
 registry_config_file: ""
-skill_repository_credential_file: ""
 agentgateway_version: v1.7.0
 helm_diff_version: v3.15.15
 helm_diff_checksum: sha256:504e99410611daa70702362e1b10dc74929df8a912cb3f6b5d21d1ee9d0cb7d9
@@ -45,5 +48,9 @@ kagent_telemetry: {}
 kagent_execution_authorization:
   scopeClaim: roles
   rules: []
-site_identity: "{{ (app_values | default({})).get('agentos', app_values | default({})).get('identity', {}) }}"
+site_platform_values: "{{ (app_values | default({})).get('agentos', app_values | default({})) }}"
+site_gateway_peers: >-
+  {{ site_platform_values.route.get('from', [{'namespaceSelector': {'matchLabels': {'kubernetes.io/metadata.name': 'kube-system'}},
+                                            'podSelector': {'matchLabels': {'app.kubernetes.io/name': 'traefik'}}}]) }}
+site_identity: "{{ site_platform_values.get('identity', {}) }}"
 site_identity_secret: "{{ site_identity.get('secretRef', 'agentos-identity') }}"

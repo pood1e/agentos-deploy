@@ -53,5 +53,33 @@ native_identity_volume if {
 deny contains "native API must verify invocation service accounts" if not native_invocation_authentication
 
 native_invocation_authentication if {
-	native_config.server.auth.serviceAccount.authority == "kubernetes"
+ native_config.server.auth.serviceAccount.authority == "kubernetes"
+}
+
+deny contains "native memory must use a rotating model credential" if not native_memory_credential
+
+native_memory_credential if {
+	volume := native_controller.spec.template.spec.volumes[_]
+	volume.name == "memory-model"
+	volume.projected.sources == [{"serviceAccountToken": {"path": "token", "audience": "http://agentos-gateway.agentos.svc.cluster.local:8080", "expirationSeconds": 3600}}]
+	native_config.memory == {"modelConfig": {"namespace": "agentos", "name": "knowledge-embedding"}, "bearerTokenFile": "/var/run/kagent-memory/token"}
+	container := native_controller.spec.template.spec.containers[_]
+	container.name == "controller"
+	container.volumeMounts[_] == {"name": "memory-model", "mountPath": "/var/run/kagent-memory", "readOnly": true}
+}
+
+deny contains "native OIDC and OAuth renewal must share private IdP trust" if {
+	native_config.server.auth.oidc.caFile
+	not native_identity_trust
+}
+
+native_identity_trust if {
+	native_config.server.auth.oidc.caFile == "/etc/kagent/identity-ca/ca.crt"
+	native_config.executionAuthorization.oauth.caFile == "/etc/kagent/identity-ca/ca.crt"
+	volume := native_controller.spec.template.spec.volumes[_]
+	volume.name == "identity-ca"
+	volume.configMap == {"name": "identity-ca", "items": [{"key": "issuer.pem", "path": "ca.crt"}]}
+	container := native_controller.spec.template.spec.containers[_]
+	container.name == "controller"
+	container.volumeMounts[_] == {"name": "identity-ca", "mountPath": "/etc/kagent/identity-ca", "readOnly": true}
 }
