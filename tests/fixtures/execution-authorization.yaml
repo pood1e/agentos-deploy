@@ -1,5 +1,7 @@
 scopeClaim: roles
-gatewayAudience: https://gateway.example.test
+gatewayAudiences:
+  - http://agentos-model-gateway.agentos.svc.cluster.local:8080
+  - http://agentos-mcp-gateway.agentos.svc.cluster.local:8080
 rules:
   - {resourceType: Session, verbs: [get, list]}
   - {resourceType: Session, verbs: [create, update, delete], anyScope: [agentos-writer]}

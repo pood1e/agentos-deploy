@@ -49,7 +49,7 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 | `agentos_cache` | 缓存目录，默认 `$XDG_CACHE_HOME/agentos` 或 `~/.cache/agentos` |
 | `node_hosts` | 可选节点 hosts 记录 `{name, address}` |
 | `kagent_telemetry` | 可选 kagent 原生 `TelemetryConfig`，应用于控制面与运行时默认值 |
-| `kagent_execution_authorization` | 原生 `ExecutionAuthorizationConfig` 的 `scopeClaim`、`rules` 与 `gatewayAudience`；资源规则使用原生 `ResourceScopeRule`，覆盖本站启用的 API 与运行时资源 |
+| `kagent_execution_authorization` | 原生 `ExecutionAuthorizationConfig` 的 `scopeClaim`、`rules` 与 `gatewayAudiences`；资源规则使用原生 `ResourceScopeRule`，覆盖本站启用的 API 与运行时资源 |
 
 collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_registry`，对应所部署的平台版本、源码提交与镜像注册表路径。
 
@@ -70,7 +70,7 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 原生 kagent API 验证 `identity.issuer` 的签名与 `identity.audience`，OAuth 续期使用 `identity.clientId`、同一客户端 Secret 和 discovery 的 HTTPS token endpoint。站点首次生成 `kagent-execution-credentials` 中的 32 字节加密密钥，升级复用；该 Secret 仅挂载到 controller。备份 PostgreSQL 时同时备份此 Secret。浏览器会话 Cookie 与登录刷新由 oauth2-proxy / IdP 管理。
 
-`kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/agentos/1.0.0-alpha17/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudience` 与网关 Actor 凭据的受众一致，部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源补齐允许清单。
+`kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/agentos/1.0.0-alpha17/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 列出模型、MCP 等出口的精确 HTTP(S) origin，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单。
 
 运行时控制面直接连接 `kagent-controller:8083`。其 NetworkPolicy 允许同命名空间的业务网关、平台 API/dataplane、controller，以及 `ate-system` 的 `atenet-egress` 访问，策略随原生 kagent release 管理。发现凭据使用独立的 `kagent-invocation` audience；站点授予 controller 创建 TokenReview 的权限，并保留 K3s 内置的 NetworkPolicy 控制器。
 

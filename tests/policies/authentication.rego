@@ -17,7 +17,8 @@ native_authority if {
 	authority := native_config.executionAuthorization
 	authority == kagent.config.executionAuthorization
 	authority.scopeClaim != ""
-	authority.gatewayAudience != ""
+	is_array(authority.gatewayAudiences)
+	count(authority.gatewayAudiences) > 0
 	count(authority.rules) > 0
 	authority.encryptionKeyFile == "/etc/kagent/execution/key"
 	startswith(authority.oauth.tokenEndpoint, "https://")

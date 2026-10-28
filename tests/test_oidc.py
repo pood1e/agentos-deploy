@@ -216,3 +216,42 @@ class OIDCDiscoveryTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Validate native execution authorization", result.stdout)
         self.assertNotIn("TASK [Discover", result.stdout)
+
+    def test_native_execution_requires_gateway_audience_list(self):
+        invalid = [
+            {},
+            {"gatewayAudience": "https://gateway.example.test"},
+            {"gatewayAudiences": []},
+            {"gatewayAudiences": "http://gateway.example.test"},
+            {"gatewayAudiences": {"gateway": "http://gateway.example.test"}},
+            {
+                "gatewayAudiences": ["http://gateway.example.test"],
+                "gatewayAudience": "https://gateway.example.test",
+            },
+        ]
+        for audiences in invalid:
+            with self.subTest(audiences=audiences):
+                result = self.run_playbook(
+                    [
+                        {
+                            "ansible.builtin.include_tasks": str(
+                                ROOT / "playbooks/deploy/tasks/execution-credentials.yaml"
+                            )
+                        }
+                    ],
+                    {
+                        "site_identity": {
+                            "issuer": self.origin + "/platform",
+                            "audience": "agentos-api",
+                            "clientId": "agentos-web",
+                        },
+                        "kagent_execution_authorization": {
+                            "scopeClaim": "roles",
+                            "rules": [{"resourceType": "Session", "verbs": ["get"]}],
+                            **audiences,
+                        },
+                    },
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("Validate native execution authorization", result.stdout)
+                self.assertNotIn("TASK [Discover", result.stdout)

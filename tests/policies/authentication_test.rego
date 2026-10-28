@@ -9,7 +9,7 @@ authentication_fixture := {
 	}},
 	"executionAuthorization": {
 		"scopeClaim": "roles",
-		"gatewayAudience": "https://gateway.example.test",
+		"gatewayAudiences": ["http://agentos-model-gateway.agentos.svc.cluster.local:8080", "http://agentos-mcp-gateway.agentos.svc.cluster.local:8080"],
 		"rules": [{"resourceType": "Session", "verbs": ["get"]}],
 		"encryptionKeyFile": "/etc/kagent/execution/key",
 		"oauth": {
@@ -39,6 +39,16 @@ test_native_authority_accepts_site_policy if {
 
 test_native_authority_rejects_empty_scope_rules if {
 	config := json.patch(authentication_fixture, [{"op": "replace", "path": "/executionAuthorization/rules", "value": []}])
+	not native_authority with native_config as config with kagent as {"config": config}
+}
+
+test_native_authority_rejects_empty_gateway_audiences if {
+	config := json.patch(authentication_fixture, [{"op": "replace", "path": "/executionAuthorization/gatewayAudiences", "value": []}])
+	not native_authority with native_config as config with kagent as {"config": config}
+}
+
+test_native_authority_rejects_scalar_gateway_audience if {
+	config := json.patch(authentication_fixture, [{"op": "replace", "path": "/executionAuthorization/gatewayAudiences", "value": "http://gateway.example.test"}])
 	not native_authority with native_config as config with kagent as {"config": config}
 }
 
