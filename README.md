@@ -36,7 +36,7 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 ```
 
 控制端安装 collection 根目录 `requirements.txt` 的 Python 依赖，并提供 Helm、cosign、ORAS 与 Kustomize。playbook 安装前以平台公钥 `playbooks/deploy/files/cosign.pub` 校验平台 Chart 与镜像的签名、版本和源码提交。
-升级时安装新版已验签 collection 后执行同一 playbook。运行时使用固定版本 Chart，资源调整经 Helm 4 `postrenderer/v1` 插件与 Kustomize overlay 应用。
+升级时安装新版已验签 collection 后执行同一 playbook。kagent 使用 fork 发布的固定摘要 Chart；Substrate 与 agentgateway 使用官方 Chart。资源调整经 Helm 4 `postrenderer/v1` 插件与 Kustomize overlay 应用。
 
 | 站点变量 | 内容 |
 | --- | --- |
@@ -58,7 +58,6 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 | `CLOUDFLARE_API_TOKEN` / `cloudflare_token_file` | DNS 与 ACME 凭据 |
 | `model_key_file` | 首次创建 `model-credentials` 的模型 API Key |
 | `identity_client_secret_file` | 站点 OIDC 机密客户端密钥，写入 `identity.secretRef` |
-| `skill_repository_credential_file` | 可选 JSON，含只读 Git 仓库 `Authorization` 请求头 |
 | `registry_config_file` | Docker JSON，用于制品下载、验签与镜像拉取 |
 
 凭据文件使用 0600 权限，保存在仓库外或 `.cache/`。Helm values 通过 JSON 文件传入。
@@ -70,11 +69,17 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 原生 kagent API 验证 `identity.issuer` 的签名与 `identity.audience`，OAuth 续期使用 `identity.clientId`、同一客户端 Secret 和 discovery 的 HTTPS token endpoint。站点首次生成 `kagent-execution-credentials` 中的 32 字节加密密钥，升级复用；该 Secret 设为 immutable 且仅挂载到 controller，保证持久凭据与加密密钥一致。备份 PostgreSQL 时同时备份此 Secret。浏览器会话 Cookie 与登录刷新由 oauth2-proxy / IdP 管理。
 
+私有 IdP 通过 `identity.caCertificateRef` 引用平台命名空间的 ConfigMap key；同一 CA 用于浏览器、后台委托及原生 OIDC / OAuth。控制端为 Ansible 配置同一 IdP CA 信任。
+
 `kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/agentos/1.0.0-alpha17/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 列出模型、MCP 等出口的精确 HTTP(S) origin，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单。
 
 `TaskStore` 与 `ToolInventory` 使用绑定 Actor 的原生运行时入口，示例规则采用认证身份许可。TaskStore 持久化与终态清理由 Actor / Session 绑定和派发预约约束，执行准入与撤权另由原生权限链维护。
 
-运行时控制面直接连接 `kagent-controller:8083`。其 NetworkPolicy 允许同命名空间的业务网关、平台 API/dataplane、controller，以及 `ate-system` 的 `atenet-egress` 访问，策略随原生 kagent release 管理。工具发现按 `RemoteMCPServer.discoveryAuth` 获取 OAuth 或 ServiceAccount 凭据；原生协作使用独立的 `kagent-invocation` audience，站点授予 controller 创建 TokenReview 的权限，并保留 K3s 内置的 NetworkPolicy 控制器。
+运行时控制面直接连接 `kagent-controller:8083`。其 NetworkPolicy 允许同命名空间的业务网关、平台 API/dataplane、controller，以及 `ate-system` 的 `atenet-egress` 访问，策略随原生 kagent release 管理。站点授予 controller 创建 TokenReview 的权限，并保留 K3s 内置的 NetworkPolicy 控制器。
+
+站点在 `route.hosts.api` 发布原生 `/agents/` A2A HTTP，以及 A2A、Session、Execution 的 gRPC 服务，使用 h2c Service 转发至原生控制面。入口 NetworkPolicy 复用 `route.from`，默认仅允许 K3s Traefik；原生 OIDC、资源权限与执行归属共同约束外部调用。
+
+团队记忆由 kagent 调用 `knowledge-embedding` ModelConfig 生成嵌入；controller 挂载面向模型网关的轮换 ServiceAccount Token。站点按 Kubernetes 官方方式向网关开放 ServiceAccount issuer discovery 与公开 JWKS，TLS 信任使用集群 CA。MCP 发现凭据由各 RemoteMCPServer 的原生 `discoveryAuth` 管理。
 
 ```yaml
 kagent_telemetry:

@@ -16,6 +16,7 @@ kubeconfig: "{{ environment_kubeconfig | default(environment_cache ~ '/kubeconfi
 gateway_namespace: mcp
 gateway_node_port: 31000
 environment_issuer: ""
+environment_discovery_auth: {}
 gateway_server_name: "{{ environment_name }}-mcp.{{ environment_domain }}"
 gateway_resource: "https://{{ gateway_server_name }}:{{ gateway_node_port }}/mcp"
 cert_manager_version: v1.21.2

@@ -33,6 +33,5 @@ replacements:
     targets:
       - select: {kind: ConfigMap, name: atenet-router-agentgateway-config}
         fieldPaths:
-          - data.config\.yaml.routes.[name=substrate-actors.*].policies.substrateIngress.requestParking.budget
-          - data.config\.yaml.binds.*.listeners.*.routes.[name=substrate-actors.*].policies.substrateIngress.requestParking.budget
+          - data.config\.yaml.routes.[name=^substrate-actors$].policies.substrateIngress.requestParking.budget
         options: {create: true}

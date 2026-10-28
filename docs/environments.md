@@ -20,6 +20,7 @@
 | --- | --- |
 | `environment_name` | 对应 `global.agentos.environments` |
 | `environment_issuer` | HTTPS OIDC issuer |
+| `environment_discovery_auth` | 原生 MCPDiscoveryAuth；OAuth2 客户端 `agentos-catalog`、平台 Secret 引用及可选 IdP CA ConfigMap 引用 |
 | `environment_domain` | 网关 DNS 名称所属域 |
 | `environment_kubeconfig` | 默认 `<agentos_cache>/environments/<name>/kubeconfig.yaml` |
 | `gateway_server_name` | 默认 `<environment>-mcp.<domain>`，用于证书 SAN 与上游 SNI |
@@ -38,6 +39,8 @@ ansible-playbook agentos.platform.connections -i <site>/environments.yaml -e @<s
 ```
 
 连接发布从平台与环境 OIDC Discovery 校验 issuer，并读取 HTTPS JWKS 与令牌端点。平台 `identity.audience`、`identity.writerRole` 随原生 JWTProvider 发布；网关使用每身份 Secret 执行 RFC 8693 交换。浏览器环境 API 与 MCP App 只读视图由连接 Chart 的原生路由和授权管理。
+
+方案包在平台命名空间创建 catalog 客户端 Secret，并将其引用写入 `environment_discovery_auth.oauth2.clientSecretRef`；`clientId` 为 `agentos-catalog`。Discovery 的 token endpoint 自动填入原生配置。私有 IdP 使用 `caCertificateRef: {name: lab-identity-ca, key: ca.crt}`，同一信任根用于原生发现、网关 JWKS 与令牌交换；环境网关 TLS 使用独立 CA。
 
 ## 资源归属与生命周期
 

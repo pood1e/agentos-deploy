@@ -43,6 +43,16 @@
         oidc_issuer: "{{ environment_issuer }}"
       when: environment_state == 'present'
 
+    - name: Require native catalog discovery credentials
+      ansible.builtin.assert:
+        that:
+          - environment_discovery_auth.get('oauth2', {}).get('clientId', '') == 'agentos-catalog'
+          - environment_discovery_auth.get('oauth2', {}).get('clientSecretRef', {}).get('name', '') | length > 0
+          - environment_discovery_auth.get('oauth2', {}).get('clientSecretRef', {}).get('key', '') | length > 0
+          - "'serviceAccount' not in environment_discovery_auth"
+        quiet: true
+      when: environment_state == 'present'
+
     - name: Record environment connection inputs
       ansible.builtin.set_fact:
         environment_connection: "{{ lookup('ansible.builtin.template', 'templates/connection-values.json.j2') | from_json }}"

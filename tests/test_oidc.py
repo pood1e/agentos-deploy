@@ -146,6 +146,13 @@ class OIDCDiscoveryTest(unittest.TestCase):
             "environment_name": "lab",
             "environment_governance": "direct",
             "environment_issuer": self.origin + "/environment",
+            "environment_discovery_auth": {
+                "oauth2": {
+                    "clientId": "agentos-catalog",
+                    "clientSecretRef": {"name": "lab-catalog", "key": "client-secret"},
+                    "caCertificateRef": {"name": "lab-identity-ca", "key": "ca.crt"},
+                }
+            },
             "gateway_resource": "https://environment.test/mcp",
             "ansible_host": "192.0.2.1",
             "gateway_server_name": "environment.test",
@@ -174,6 +181,16 @@ class OIDCDiscoveryTest(unittest.TestCase):
         values = json.loads(output.read_text())
         self.assertEqual(
             values["environments"][0]["tokenEndpointURL"], self.origin + "/environment/token"
+        )
+        self.assertEqual(values["environments"][0]["jwksURL"], self.origin + "/environment/keys")
+        self.assertEqual(
+            values["environments"][0]["discoveryAuth"],
+            {
+                "oauth2": {
+                    **variables["environment_discovery_auth"]["oauth2"],
+                    "tokenEndpoint": self.origin + "/environment/token",
+                }
+            },
         )
         self.assertEqual(
             values["platform"]["authentication"],
