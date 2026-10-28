@@ -71,7 +71,7 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 私有 IdP 通过 `identity.caCertificateRef` 引用平台命名空间的 ConfigMap key；同一 CA 用于浏览器、后台委托及原生 OIDC / OAuth。控制端为 Ansible 配置同一 IdP CA 信任。
 
-`kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/agentos/1.0.0-alpha17/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 列出模型、MCP 等出口的精确 HTTP(S) origin，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单。
+`kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/agentos/1.0.0-alpha17/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 逐项列出模型与 MCP 网关的精确 HTTP(S) origin，并包含每个环境服务的 `http://<environment>-<project>-mcp-gateway.<namespace>.svc.cluster.local:8080`，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单。
 
 `TaskStore` 与 `ToolInventory` 使用绑定 Actor 的原生运行时入口，示例规则采用认证身份许可。TaskStore 持久化与终态清理由 Actor / Session 绑定和派发预约约束，执行准入与撤权另由原生权限链维护。
 

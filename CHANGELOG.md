@@ -1,11 +1,5 @@
 # Changelog
 
-## 1.1.0
-
-- 接入 kagent 原生执行授权、持久委派凭据、目录发现和公开执行 API。
-- 固定 Agentgateway 1.7 与同批 kagent `.7` 镜像、Chart 和 CRD。
-- 隔离 Helm 插件并发布原生执行入口与私有身份源信任。
-
 ## 1.0.0
 
 - 参考部署从 AgentOS 平台仓库迁出，固定平台 0.43.0。
