@@ -64,6 +64,8 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 凭据文件使用 0600 权限，保存在仓库外或 `.cache/`。Helm values 通过 JSON 文件传入。
 参考部署启用 K3s Traefik 的 Gateway API，创建 `agentos-public` 与域名证书，并首次生成 `<release>-sessions` 会话 Secret，升级复用。
 
+启用语音时，部署首次生成 `voice.sessionSecretRef`（默认 `agentos-voice-sessions`）的 API 专用签名密钥，与 LiveKit 凭据分别保存。升级复用已有密钥；轮换后重启 API 并重新建立语音会话。
+
 应用部署将 Substrate 当前 live Service DNS ClusterTrustBundle 发布为平台命名空间的 `substrate-service-dns-ca` ConfigMap，供 agentgateway 直接验证 Actor JWKS HTTPS 端点。Service DNS 根轮换时执行 `agentos.platform.install --tags app` 同步信任；轮换期间保留覆盖现有服务证书的根。Actor 签名公钥由原生 JWKS 端点发布，刷新由 agentgateway 管理。
 
 原生 kagent API 验证 `identity.issuer` 的签名与 `identity.audience`，OAuth 续期使用 `identity.clientId`、同一客户端 Secret 和 discovery 的 HTTPS token endpoint。站点首次生成 `kagent-execution-credentials` 中的 32 字节加密密钥，升级复用；该 Secret 仅挂载到 controller。备份 PostgreSQL 时同时备份此 Secret。浏览器会话 Cookie 与登录刷新由 oauth2-proxy / IdP 管理。
