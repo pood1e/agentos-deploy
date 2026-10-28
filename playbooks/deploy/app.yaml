@@ -8,6 +8,7 @@
     site_identity: "{{ (app_values | default({})).get('agentos', app_values | default({})).get('identity', {}) }}"
     site_identity_secret: "{{ site_identity.get('secretRef', 'agentos-identity') }}"
     site_application_name: "{{ app_release_name[:44] | regex_replace('-$', '') }}"
+    voice_configuration: "{{ (app_values | default({})).get('agentos', app_values | default({})).get('voice', {}) }}"
   module_defaults:
     kubernetes.core.k8s:
       kubeconfig: "{{ kubeconfig_path }}"
@@ -61,6 +62,10 @@
 
     - name: Provision browser session credentials
       ansible.builtin.include_tasks: tasks/site-credentials.yaml
+
+    - name: Provision API voice session signing key
+      ansible.builtin.import_tasks: tasks/voice-session-key.yaml
+      when: voice_configuration.get('enabled', false) | bool
 
     - name: Publish native runtime trust
       ansible.builtin.include_tasks: tasks/runtime-trust.yaml
