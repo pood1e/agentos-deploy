@@ -23,7 +23,7 @@ test_controller_ingress_accepts_trusted_backends if {
 
 test_controller_ingress_rejects_missing_policy if {
 	messages := deny with controller_policy as null
-	"native controller ingress must be restricted to trusted same-namespace backends" in messages
+	"native controller ingress must be restricted to trusted backends and Substrate egress" in messages
 }
 
 test_controller_ingress_rejects_open_ingress if {

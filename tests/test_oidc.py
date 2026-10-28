@@ -194,3 +194,25 @@ class OIDCDiscoveryTest(unittest.TestCase):
                 )
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("Verify identity provider endpoints", result.stdout)
+
+    def test_native_execution_requires_explicit_scope_rules(self):
+        result = self.run_playbook(
+            [
+                {
+                    "ansible.builtin.include_tasks": str(
+                        ROOT / "playbooks/deploy/tasks/execution-credentials.yaml"
+                    )
+                }
+            ],
+            {
+                "site_identity": {
+                    "issuer": self.origin + "/platform",
+                    "audience": "agentos-api",
+                    "clientId": "agentos-web",
+                },
+                "kagent_execution_authorization": {"scopeClaim": "roles", "rules": []},
+            },
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Validate native execution authorization", result.stdout)
+        self.assertNotIn("TASK [Discover", result.stdout)

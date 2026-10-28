@@ -28,4 +28,8 @@ spec:
               - key: app.kubernetes.io/component
                 operator: In
                 values: [api, dataplane]
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: ate-system}
+          podSelector:
+            matchLabels: {app: atenet-egress}
       ports: [{port: http, protocol: TCP}]

@@ -8,6 +8,10 @@
     app_release_name: agentos
     agentos_image_registry: registry.example.com/agentos
     harness_defaults: "{{ lookup('ansible.builtin.file', '../tests/fixtures/harnesses.yaml') | from_yaml }}"
+    app_values:
+      identity: {issuer: 'https://identity.example.test', audience: agentos-api, clientId: agentos-web}
+    oidc_discovery:
+      json: {token_endpoint: 'https://identity.example.test/token'}
     microvm_image_credentials:
       auth: {registry.example.com: {}, harness.example.com: {}}
     output: "{{ playbook_dir }}/../.cache/check"
@@ -15,6 +19,7 @@
     - name: Use the controller Python environment
       ansible.builtin.set_fact:
         ansible_python_interpreter: "{{ ansible_playbook_python }}"
+        kagent_execution_authorization: "{{ lookup('ansible.builtin.file', '../tests/fixtures/execution-authorization.yaml') | from_yaml }}"
 
     - name: Create the validation directory
       ansible.builtin.file:

@@ -1,0 +1,12 @@
+scopeClaim: roles
+gatewayAudience: https://gateway.example.test
+rules:
+  - {resourceType: Session, verbs: [get, list]}
+  - {resourceType: Session, verbs: [create, update, delete], anyScope: [agentos-writer]}
+  - {resourceType: Agent, verbs: [get, list]}
+  - {resourceType: Agent, verbs: [create, update, delete], anyScope: [agentos-agents-manage]}
+  - {resourceType: TaskStore, verbs: [get, list, create, update], anyScope: [agentos-writer]}
+  - {resourceType: ToolInventory, verbs: [update], anyScope: [agentos-writer]}
+  - {resourceType: Memory, verbs: [get, list, create], anyScope: [agentos-writer]}
+  - {resourceType: TeamMemory, verbs: [get, list]}
+  - {resourceType: TeamMemory, verbs: [create, delete], anyScope: [agentos-knowledge-manage]}

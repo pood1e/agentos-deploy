@@ -258,6 +258,13 @@
           imagePullSecrets: [{name: agentos-registry}]
       tags: [kagent]
 
+    - name: Configure native execution credentials
+      ansible.builtin.include_tasks:
+        file: tasks/execution-credentials.yaml
+        apply:
+          tags: [kagent]
+      tags: [kagent]
+
     - name: Install kagent
       kubernetes.core.helm:
         name: kagent

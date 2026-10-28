@@ -5,8 +5,6 @@
   vars_files: [vars.yaml]
   vars:
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
-    site_identity: "{{ (app_values | default({})).get('agentos', app_values | default({})).get('identity', {}) }}"
-    site_identity_secret: "{{ site_identity.get('secretRef', 'agentos-identity') }}"
     site_application_name: "{{ app_release_name[:44] | regex_replace('-$', '') }}"
   module_defaults:
     kubernetes.core.k8s:
@@ -28,35 +26,21 @@
       when: skill_repository_credential_file | length > 0
       no_log: true
 
-    - name: Configure the identity client secret
-      kubernetes.core.k8s:
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata: {name: "{{ site_identity_secret }}", namespace: "{{ agentos_namespace }}"}
-          type: Opaque
-          stringData:
-            client-secret: "{{ lookup('file', identity_client_secret_file) | trim }}"
-      when: identity_client_secret_file | length > 0
-      no_log: true
+    - name: Configure identity credentials
+      ansible.builtin.include_tasks: tasks/identity-credentials.yaml
 
-    - name: Discover application credentials
+    - name: Discover model credentials
       kubernetes.core.k8s_info:
         api_version: v1
         kind: Secret
-        name: "{{ item }}"
+        name: model-credentials
         namespace: "{{ agentos_namespace }}"
-      loop:
-        - model-credentials
-        - "{{ site_identity_secret }}"
-        - "{{ app_values.get('agentos', app_values).get('execution', {}).get('keySecret', 'agentos-execution') }}"
-      register: application_credentials
+      register: application_model_credentials
       no_log: true
 
-    - name: Require application credentials
+    - name: Require model credentials
       ansible.builtin.assert:
-        that: item.resources | length > 0 or ansible_check_mode
-      loop: "{{ application_credentials.results }}"
+        that: application_model_credentials.resources | length > 0 or ansible_check_mode
       no_log: true
 
     - name: Provision browser session credentials

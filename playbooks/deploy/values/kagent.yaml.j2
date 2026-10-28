@@ -1,3 +1,11 @@
+{% set execution_credentials = {
+  'encryptionKeyFile': '/etc/kagent/execution/key',
+  'oauth': {
+    'tokenEndpoint': oidc_discovery.json.token_endpoint,
+    'clientId': site_identity.clientId,
+    'clientSecretFile': '/etc/kagent/identity/client-secret'
+  }
+} -%}
 global:
   watchNamespaces: ["{{ agentos_namespace }}"]
 providers: null
@@ -6,6 +14,15 @@ database:
     readWriteConnectionStringSecretRef: {name: kagent-postgres, key: connectionString}
     ownerConnectionStringSecretRef: {name: kagent-postgres, key: connectionString}
 config:
+  server:
+    auth:
+      mode: oidc
+      oidc:
+        issuer: {{ site_identity.issuer | to_json }}
+        audience: {{ site_identity.audience | to_json }}
+      serviceAccount: {authority: kubernetes}
+  executionAuthorization:
+{{ kagent_execution_authorization | combine(execution_credentials) | to_nice_yaml(indent=2) | indent(4, true) }}
   harnessImages:
     release: "{{ kagent_runtime_version }}"
     kagent: "{{ harness_defaults.standard.workload.image }}"
@@ -24,21 +41,34 @@ config:
   runtimeDefaults:
     telemetry: &telemetry
 {{ {'captureContent': false, 'captureRawApiBodies': false} | combine(kagent_telemetry, recursive=true) | to_nice_yaml(indent=2) | indent(6, true) }}
-    controlPlaneUrl: "http://{{ app_release_name }}-dataplane.{{ agentos_namespace }}.svc.cluster.local:9091"
+    controlPlaneUrl: "http://kagent-controller.{{ agentos_namespace }}.svc.cluster.local:8083"
   telemetry: *telemetry
 controller:
+  podSecurityContext:
+    runAsNonRoot: true
+    fsGroup: 65532
+    seccompProfile: {type: RuntimeDefault}
   env:
     - {name: KAGENT_MCP_DISCOVERY_URL, value: "http://{{ app_release_name }}-mcp-gateway.{{ agentos_namespace }}.svc.cluster.local:8080"}
     - {name: KAGENT_MCP_DISCOVERY_TOKEN_FILE, value: /var/run/kagent-mcp/token}
   volumes:
+    - name: execution-credentials
+      secret: {secretName: kagent-execution-credentials, defaultMode: 0440}
+    - name: identity-client
+      secret:
+        secretName: {{ site_identity_secret | to_json }}
+        defaultMode: 0440
+        items: [{key: client-secret, path: client-secret}]
     - name: mcp-discovery
       projected:
         sources:
           - serviceAccountToken:
               path: token
-              audience: agentos-mcp-discovery
+              audience: kagent-invocation
               expirationSeconds: 3600
   volumeMounts:
+    - {name: execution-credentials, mountPath: /etc/kagent/execution, readOnly: true}
+    - {name: identity-client, mountPath: /etc/kagent/identity, readOnly: true}
     - {name: mcp-discovery, mountPath: /var/run/kagent-mcp, readOnly: true}
   imagePullSecrets: [{name: agentos-registry}]
   substrateClientCertificate:
