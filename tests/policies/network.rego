@@ -21,6 +21,10 @@ controller_peers(selector) := {
 		"matchLabels": {"app.kubernetes.io/name": "agentos"},
 		"matchExpressions": [{"key": "app.kubernetes.io/component", "operator": "In", "values": ["api", "dataplane"]}],
 	}},
+	{
+		"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "ate-system"}},
+		"podSelector": {"matchLabels": {"app": "atenet-egress"}},
+	},
 }
 
 restricted_controller(policy, selector) if {
@@ -32,9 +36,9 @@ restricted_controller(policy, selector) if {
 	{peer | some peer in rule.from} == controller_peers(selector)
 }
 
-deny contains "native controller ingress must be restricted to trusted same-namespace backends" if not controller_policy.spec
+deny contains "native controller ingress must be restricted to trusted backends and Substrate egress" if not controller_policy.spec
 
-deny contains "native controller ingress must be restricted to trusted same-namespace backends" if {
+deny contains "native controller ingress must be restricted to trusted backends and Substrate egress" if {
 	controller_policy
 	not restricted_controller(controller_policy, native_controller.spec.selector)
 }

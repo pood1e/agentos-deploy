@@ -134,13 +134,14 @@ class PostRendererTest(unittest.TestCase):
         )
         router = resource("ConfigMap", "atenet-router-agentgateway-config", {})
         router.pop("spec")
+        policies = {"substrateIngress": {"host": "api:443"}}
         router["data"] = {
             "config.yaml": yaml.safe_dump(
                 {
                     "routes": [
                         {
                             "name": "substrate-actors",
-                            "policies": {"substrateIngress": {"host": "api:443"}},
+                            "policies": policies,
                         }
                     ],
                     "binds": [
@@ -150,14 +151,15 @@ class PostRendererTest(unittest.TestCase):
                                     "routes": [
                                         {
                                             "name": "substrate-actors-tunneled",
-                                            "policies": {"substrateIngress": {"host": "api:443"}},
+                                            "policies": policies,
                                         }
                                     ]
                                 }
                             ]
                         }
                     ],
-                }
+                },
+                sort_keys=False,
             )
         }
         result = transform(

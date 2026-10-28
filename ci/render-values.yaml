@@ -8,20 +8,36 @@
     app_release_name: agentos
     agentos_image_registry: registry.example.com/agentos
     harness_defaults: "{{ lookup('ansible.builtin.file', '../tests/fixtures/harnesses.yaml') | from_yaml }}"
+    app_values:
+      identity: {issuer: 'https://identity.example.test', audience: agentos-api, clientId: agentos-web}
+      route: &route
+        parentRefs: [{name: agentos-public}]
+        hosts: {api: api.example.test}
+        from:
+          - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+            podSelector: {matchLabels: {app.kubernetes.io/name: traefik}}
+    oidc_discovery:
+      json: {token_endpoint: 'https://identity.example.test/token'}
     microvm_image_credentials:
       auth: {registry.example.com: {}, harness.example.com: {}}
     output: "{{ playbook_dir }}/../.cache/check"
+    agentos_cache: "{{ output }}"
   tasks:
     - name: Use the controller Python environment
       ansible.builtin.set_fact:
         ansible_python_interpreter: "{{ ansible_playbook_python }}"
+        agentos_cache: "{{ output }}"
+        kagent_execution_authorization: "{{ lookup('ansible.builtin.file', '../tests/fixtures/execution-authorization.yaml') | from_yaml }}"
 
     - name: Create the validation directory
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
         mode: "0700"
-      loop: ["{{ output }}", "{{ output }}/telemetry"]
+      loop: ["{{ output }}", "{{ output }}/telemetry", "{{ output }}/private-identity"]
+
+    - name: Prepare native runtime charts
+      ansible.builtin.include_tasks: ../playbooks/deploy/tasks/runtime-charts.yaml
 
     - name: Render native deployment values
       ansible.builtin.template:
@@ -29,6 +45,12 @@
         dest: "{{ output }}/{{ item }}-values.yaml"
         mode: "0600"
       loop: [kagent, substrate]
+
+    - name: Render native execution ingress
+      ansible.builtin.template:
+        src: ../playbooks/deploy/templates/runtime-ingress.yaml.j2
+        dest: "{{ output }}/runtime-ingress.yaml"
+        mode: "0600"
 
     - name: Render enabled OTLP deployment values
       ansible.builtin.template:
@@ -45,3 +67,17 @@
                        'runtimeVersion': kagent_runtime_version}} | to_nice_json }}
         dest: "{{ output }}/test-data.json"
         mode: "0600"
+
+    - name: Render private identity trust
+      ansible.builtin.template:
+        src: ../playbooks/deploy/values/kagent.yaml.j2
+        dest: "{{ output }}/private-identity/kagent-values.yaml"
+        mode: "0600"
+      vars:
+        app_values:
+          route: *route
+          identity:
+            issuer: https://identity.example.test
+            audience: agentos-api
+            clientId: agentos-web
+            caCertificateRef: {name: identity-ca, key: issuer.pem}

@@ -1,3 +1,15 @@
+{% set execution_credentials = {
+  'encryptionKeyFile': '/etc/kagent/execution/key',
+  'oauth': {
+    'tokenEndpoint': oidc_discovery.json.token_endpoint,
+    'clientId': site_identity.clientId,
+    'clientSecretFile': '/etc/kagent/identity/client-secret'
+  }
+} -%}
+{% set identity_ca = site_identity.get('caCertificateRef') -%}
+{% if identity_ca -%}
+{% set unused = execution_credentials.oauth.update({'caFile': '/etc/kagent/identity-ca/ca.crt'}) -%}
+{% endif -%}
 global:
   watchNamespaces: ["{{ agentos_namespace }}"]
 providers: null
@@ -6,6 +18,18 @@ database:
     readWriteConnectionStringSecretRef: {name: kagent-postgres, key: connectionString}
     ownerConnectionStringSecretRef: {name: kagent-postgres, key: connectionString}
 config:
+  server:
+    auth:
+      mode: oidc
+      oidc:
+        issuer: {{ site_identity.issuer | to_json }}
+        audience: {{ site_identity.audience | to_json }}
+{% if identity_ca %}
+        caFile: /etc/kagent/identity-ca/ca.crt
+{% endif %}
+      serviceAccount: {authority: kubernetes}
+  executionAuthorization:
+{{ kagent_execution_authorization | combine(execution_credentials) | to_nice_yaml(indent=2) | indent(4, true) }}
   harnessImages:
     release: "{{ kagent_runtime_version }}"
     kagent: "{{ harness_defaults.standard.workload.image }}"
@@ -15,6 +39,9 @@ config:
     owner: {role: kagent_owner}
     readWrite: {role: kagent_owner}
     vectorEnabled: true
+  memory:
+    modelConfig: {namespace: "{{ agentos_namespace }}", name: knowledge-embedding}
+    bearerTokenFile: /var/run/kagent-memory/token
   sandboxes:
     guestImage: ghcr.io/kagent-dev/kagent/sandbox-guest@sha256:5355072effb219e157c3e0471637ca64d1f84ab7513dde23968c20cd65d18c9b
     cpu: "1"
@@ -22,24 +49,44 @@ config:
     defaultTtl: 3600s
     maxTtl: 86400s
   runtimeDefaults:
+    gatewayUrl: {{ ('https://' ~ site_platform_values.route.hosts.api) | to_json }}
     telemetry: &telemetry
 {{ {'captureContent': false, 'captureRawApiBodies': false} | combine(kagent_telemetry, recursive=true) | to_nice_yaml(indent=2) | indent(6, true) }}
-    controlPlaneUrl: "http://{{ app_release_name }}-dataplane.{{ agentos_namespace }}.svc.cluster.local:9091"
+    controlPlaneUrl: "http://kagent-controller.{{ agentos_namespace }}.svc.cluster.local:8083"
   telemetry: *telemetry
 controller:
-  env:
-    - {name: KAGENT_MCP_DISCOVERY_URL, value: "http://{{ app_release_name }}-mcp-gateway.{{ agentos_namespace }}.svc.cluster.local:8080"}
-    - {name: KAGENT_MCP_DISCOVERY_TOKEN_FILE, value: /var/run/kagent-mcp/token}
+  podSecurityContext:
+    runAsNonRoot: true
+    fsGroup: 65532
+    seccompProfile: {type: RuntimeDefault}
   volumes:
-    - name: mcp-discovery
+{% if identity_ca %}
+    - name: identity-ca
+      configMap:
+        name: {{ identity_ca.name | to_json }}
+        items: [{key: {{ identity_ca.key | to_json }}, path: ca.crt}]
+{% endif %}
+    - name: execution-credentials
+      secret: {secretName: kagent-execution-credentials, defaultMode: 0440}
+    - name: identity-client
+      secret:
+        secretName: {{ site_identity_secret | to_json }}
+        defaultMode: 0440
+        items: [{key: client-secret, path: client-secret}]
+    - name: memory-model
       projected:
         sources:
           - serviceAccountToken:
               path: token
-              audience: agentos-mcp-discovery
+              audience: "http://{{ app_release_name }}-gateway.{{ agentos_namespace }}.svc.cluster.local:8080"
               expirationSeconds: 3600
   volumeMounts:
-    - {name: mcp-discovery, mountPath: /var/run/kagent-mcp, readOnly: true}
+{% if identity_ca %}
+    - {name: identity-ca, mountPath: /etc/kagent/identity-ca, readOnly: true}
+{% endif %}
+    - {name: execution-credentials, mountPath: /etc/kagent/execution, readOnly: true}
+    - {name: identity-client, mountPath: /etc/kagent/identity, readOnly: true}
+    - {name: memory-model, mountPath: /var/run/kagent-memory, readOnly: true}
   imagePullSecrets: [{name: agentos-registry}]
   substrateClientCertificate:
     enabled: true

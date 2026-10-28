@@ -76,7 +76,11 @@
 
     - name: Wait for Kubernetes node readiness
       ansible.builtin.command:
-        argv: [/usr/local/bin/k3s, kubectl, wait, --for=condition=Ready, "node/{{ inventory_hostname }}", --timeout=300s]
+        argv: [/usr/local/bin/k3s, kubectl, wait, --for=condition=Ready, "node/{{ inventory_hostname }}", --timeout=20s]
+      register: node_readiness
+      until: node_readiness.rc == 0
+      retries: 15
+      delay: 2
       changed_when: false
 
     - name: Enable Gateway API routing in the bundled Traefik
@@ -102,14 +106,6 @@
         url: "https://github.com/kagent-dev/substrate/releases/download/v{{ substrate_version }}/kubectl-ate-linux-amd64"
         dest: /usr/local/bin/kubectl-ate
         checksum: "{{ kubectl_ate_checksum }}"
-        mode: "0755"
-        timeout: 300
-
-    - name: Download kagent CLI
-      ansible.builtin.get_url:
-        url: "https://github.com/kagent-dev/kagent/releases/download/v{{ kagent_version }}/kagent-linux-amd64"
-        dest: /usr/local/bin/kagent
-        checksum: "{{ kagent_cli_checksum }}"
         mode: "0755"
         timeout: 300
 

@@ -57,25 +57,11 @@
       when:
         - environment_state == 'present'
     - name: Discover the environment identity provider
-      tags:
-        - always
-      ansible.builtin.uri:
-        url: "{{ environment_issuer }}/.well-known/openid-configuration"
-        return_content: true
-      register: environment_discovery
-      check_mode: false
-      when:
-        - environment_state == 'present'
-    - name: Verify the environment issuer
-      tags:
-        - always
-      ansible.builtin.assert:
-        that:
-          - environment_discovery.json.issuer == environment_issuer
-          - environment_discovery.json.jwks_uri is match('^https://')
-        quiet: true
-      when:
-        - environment_state == 'present'
+      tags: [always]
+      ansible.builtin.import_tasks: tasks/discover-oidc.yaml
+      vars:
+        oidc_issuer: "{{ environment_issuer }}"
+      when: environment_state == 'present'
     - name: Create gateway chart cache
       tags:
         - always

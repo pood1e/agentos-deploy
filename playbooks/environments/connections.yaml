@@ -4,6 +4,10 @@
   connection: local
   gather_facts: false
   vars_files: [vars.yaml]
+  vars:
+    connected_environments: >-
+      {{ groups['environments'] | map('extract', hostvars) | selectattr('environment_connection', 'defined')
+         | selectattr('environment_connection') | map(attribute='environment_connection') | list }}
   tasks:
     - name: Use the controller Python environment
       ansible.builtin.set_fact:
@@ -32,6 +36,22 @@
       register: gateway_certificate
       when: environment_state == 'present'
       no_log: true
+
+    - name: Discover the environment identity provider
+      ansible.builtin.import_tasks: tasks/discover-oidc.yaml
+      vars:
+        oidc_issuer: "{{ environment_issuer }}"
+      when: environment_state == 'present'
+
+    - name: Require native catalog discovery credentials
+      ansible.builtin.assert:
+        that:
+          - environment_discovery_auth.get('oauth2', {}).get('clientId', '') == 'agentos-catalog'
+          - environment_discovery_auth.get('oauth2', {}).get('clientSecretRef', {}).get('name', '') | length > 0
+          - environment_discovery_auth.get('oauth2', {}).get('clientSecretRef', {}).get('key', '') | length > 0
+          - "'serviceAccount' not in environment_discovery_auth"
+        quiet: true
+      when: environment_state == 'present'
 
     - name: Record environment connection inputs
       ansible.builtin.set_fact:
@@ -63,14 +83,27 @@
       check_mode: false
       when: inventory_hostname == groups['environments'][-1]
 
+    - name: Require platform identity authorization
+      ansible.builtin.assert:
+        that:
+          - platform_identity.get('audience', '') | length > 0
+          - platform_identity.get('writerRole', '') | length > 0
+        quiet: true
+      when:
+        - inventory_hostname == groups['environments'][-1]
+        - connected_environments | length > 0
+
+    - name: Discover the platform identity provider
+      ansible.builtin.import_tasks: tasks/discover-oidc.yaml
+      vars:
+        oidc_issuer: "{{ platform_identity.get('issuer', '') }}"
+      when:
+        - inventory_hostname == groups['environments'][-1]
+        - connected_environments | length > 0
+
     - name: Write the platform connection release values
-      ansible.builtin.copy:
-        content: >-
-          {{ {'platform': {'release': platform_release, 'controllerServiceAccount': native_controller_service_account,
-                           'actorIssuer': native.platform_actor_issuer},
-              'environments': groups['environments'] | map('extract', hostvars) | selectattr('environment_connection', 'defined')
-                              | selectattr('environment_connection')
-                              | map(attribute='environment_connection') | list} | to_nice_json }}
+      ansible.builtin.template:
+        src: templates/connection-release.json.j2
         dest: "{{ chart_cache }}/connections-values.json"
         mode: "0600"
       vars:

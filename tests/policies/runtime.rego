@@ -30,7 +30,9 @@ deny contains "the microVM image differs from the deployment pin" if kagent.subs
 
 deny contains "the controller watches an unrelated namespace" if kagent.global.watchNamespaces != ["agentos"]
 
-deny contains "runtime persistence bypasses the dataplane" if kagent.config.runtimeDefaults.controlPlaneUrl != "http://agentos-dataplane.agentos.svc.cluster.local:9091"
+deny contains "runtime persistence must use the native controller" if native_config.runtimeDefaults.controlPlaneUrl != "http://kagent-controller.agentos.svc.cluster.local:8083"
+
+deny contains "native Agent cards must advertise the public API origin" if native_config.runtimeDefaults.gatewayUrl != "https://api.example.test"
 
 deny contains "the controller lacks its native Substrate client certificate" if kagent.controller.substrateClientCertificate.enabled != true
 

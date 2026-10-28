@@ -16,13 +16,16 @@ kubeconfig: "{{ environment_kubeconfig | default(environment_cache ~ '/kubeconfi
 gateway_namespace: mcp
 gateway_node_port: 31000
 environment_issuer: ""
+environment_discovery_auth: {}
 gateway_server_name: "{{ environment_name }}-mcp.{{ environment_domain }}"
 gateway_resource: "https://{{ gateway_server_name }}:{{ gateway_node_port }}/mcp"
 cert_manager_version: v1.21.2
 native_controller_service_account: kagent-controller
 environment_apis: []
 registry_config_file: ""
-agentos_config: "{{ (lookup('ansible.builtin.file', agentos_values_file) | from_yaml).global.agentos }}"
+solution_values: "{{ lookup('ansible.builtin.file', agentos_values_file) | from_yaml }}"
+agentos_config: "{{ solution_values.global.agentos }}"
+platform_identity: "{{ solution_values.get('agentos', solution_values).get('identity', {}) }}"
 toolsets: >-
   {{ agentos_config.toolsets | dict2items
      | selectattr('key', 'in', environment_connectors.keys() | list) | items2dict }}
@@ -38,9 +41,9 @@ environment_release: agentos-environment
 connections_release: "{{ platform_release }}-connections"
 environment_chart_repository: "oci://{{ agentos_image_registry }}/charts"
 environment_chart_version: "{{ delivery_version }}"
-agentgateway_version: v1.6.0
+agentgateway_version: v1.7.0
 gateway_charts:
   - name: agentgateway
-    checksum: 4a0064af58aabe04b4a9fedc08349028dc0d0eb4dc5eb15f9a26ebbcdb6360cf
+    checksum: 00c63256acd5c4305b2e7eab1da56c3e3a35a74a8f04e34aca58641dfdbc6037
   - name: agentgateway-crds
-    checksum: 49e4c65fb8b1119305a64af3b1f2229d31340e8af448d6b34dbf5a5360d25560
+    checksum: abf0327cd44f89bc263d86f155db4094166cb2e6b920805bcf879d426ecd6d91
