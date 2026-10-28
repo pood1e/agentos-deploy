@@ -1,0 +1,46 @@
+"""Mirror release sources from the source repository using a project-scoped deploy key."""
+
+import os
+import re
+import subprocess
+import tempfile
+
+from release import SOURCE
+
+TARGET = (
+    f"ssh://git@{os.environ['CI_SERVER_SHELL_SSH_HOST']}:{os.environ['CI_SERVER_SHELL_SSH_PORT']}"
+    f"/{os.environ['CI_PROJECT_PATH']}.git"
+)
+
+
+def git(*args, cwd=None):
+    result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True, timeout=120)
+    if result.returncode:
+        raise RuntimeError(
+            f"Source synchronization failed during git {args[0]}: {result.stderr.strip()}"
+        )
+    return result.stdout.strip()
+
+
+def refs(remote):
+    return {
+        ref: sha
+        for sha, ref in (line.split() for line in git("ls-remote", "--refs", remote).splitlines())
+        if ref == "refs/heads/main" or re.fullmatch(r"refs/tags/v\d+\.\d+\.\d+", ref)
+    }
+
+
+source = refs(SOURCE)
+target = refs(TARGET)
+changed = [ref for ref, sha in source.items() if target.get(ref) != sha]
+for ref in changed:
+    if ref.startswith("refs/tags/") and ref in target:
+        raise ValueError("A release tag changed upstream; immutable tag synchronization refused")
+if not changed:
+    print("Source and build repositories are synchronized")
+else:
+    with tempfile.TemporaryDirectory(prefix="agentos-source-") as directory:
+        git("init", "--bare", directory)
+        git("fetch", "--no-tags", SOURCE, *[f"{ref}:{ref}" for ref in changed], cwd=directory)
+        git("push", "--atomic", TARGET, *[f"{ref}:{ref}" for ref in changed], cwd=directory)
+    print("Synchronized", ", ".join(changed))

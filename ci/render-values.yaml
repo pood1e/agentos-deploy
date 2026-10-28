@@ -1,0 +1,47 @@
+- name: Render native runtime values for validation
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [../playbooks/deploy/vars.yaml]
+  vars:
+    agentos_namespace: agentos
+    app_release_name: agentos
+    agentos_image_registry: registry.example.com/agentos
+    harness_defaults: "{{ lookup('ansible.builtin.file', '../tests/fixtures/harnesses.yaml') | from_yaml }}"
+    microvm_image_credentials:
+      auth: {registry.example.com: {}, harness.example.com: {}}
+    output: "{{ playbook_dir }}/../.cache/check"
+  tasks:
+    - name: Use the controller Python environment
+      ansible.builtin.set_fact:
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+    - name: Create the validation directory
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0700"
+      loop: ["{{ output }}", "{{ output }}/telemetry"]
+
+    - name: Render native deployment values
+      ansible.builtin.template:
+        src: "../playbooks/deploy/values/{{ item }}.yaml.j2"
+        dest: "{{ output }}/{{ item }}-values.yaml"
+        mode: "0600"
+      loop: [kagent, substrate]
+
+    - name: Render enabled OTLP deployment values
+      ansible.builtin.template:
+        src: ../playbooks/deploy/values/kagent.yaml.j2
+        dest: "{{ output }}/telemetry/kagent-values.yaml"
+        mode: "0600"
+      vars:
+        kagent_telemetry: "{{ lookup('ansible.builtin.file', '../tests/fixtures/telemetry.yaml') | from_yaml }}"
+
+    - name: Record immutable runtime pins
+      ansible.builtin.copy:
+        content: >-
+          {{ {'test': {'controllerImage': kagent_controller_image, 'microvmImage': substrate_microvm_image,
+                       'runtimeVersion': kagent_runtime_version}} | to_nice_json }}
+        dest: "{{ output }}/test-data.json"
+        mode: "0600"

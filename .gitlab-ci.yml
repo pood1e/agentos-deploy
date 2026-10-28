@@ -1,0 +1,67 @@
+stages: [verify, release]
+
+variables:
+  FF_ENABLE_JOB_CLEANUP: "true"
+  AGENTOS_CI_RUNNER: agentos-container
+
+default:
+  image: $CI_REGISTRY_IMAGE/ci/tools@sha256:68b17f9a0317933bd84ce30fa90434f3ba699b4bf5205f3255f536286cc67a0b
+  tags: [$AGENTOS_CI_RUNNER]
+  interruptible: true
+
+workflow:
+  auto_cancel:
+    on_new_commit: interruptible
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_TAG || $CI_COMMIT_BRANCH
+
+source-sync:
+  stage: verify
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION == "GitHub source sync"
+  resource_group: agentos-deploy-source-sync
+  environment: {name: source-sync, action: prepare}
+  variables:
+    GIT_SSH_COMMAND: >-
+      ssh -F /dev/null -i $AGENTOS_SOURCE_MIRROR_KEY -o IdentitiesOnly=yes
+      -o UserKnownHostsFile=$AGENTOS_SOURCE_MIRROR_HOST_KEYS -o StrictHostKeyChecking=yes
+  before_script: [chmod 600 "$AGENTOS_SOURCE_MIRROR_KEY"]
+  script: [python ci/source-sync.py]
+
+build-ci-tools:
+  stage: verify
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: &ci-tools [mise.toml, mise.lock, requirements.txt, ci/requirements.txt, ci/collections.yaml, ci/images/**/*]
+    - changes:
+        paths: *ci-tools
+        compare_to: refs/heads/main
+  tags: [$AGENTOS_BUILDKIT_RUNNER]
+  image:
+    name: $AGENTOS_BUILDKIT_IMAGE
+    entrypoint: [""]
+  resource_group: agentos-deploy-ci-tools
+  script: [ci/build-image.sh]
+
+package:
+  stage: verify
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+  script:
+    - python ci/platform.py
+    - python ci/package.py
+  artifacts:
+    paths: [dist/]
+    expire_in: 1 day
+
+release:
+  stage: release
+  needs: [package]
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/ && $CI_COMMIT_REF_PROTECTED == "true"'
+  interruptible: false
+  resource_group: agentos-deploy-release
+  script: [python ci/publish.py]
