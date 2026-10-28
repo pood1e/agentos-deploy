@@ -5,7 +5,7 @@ variables:
   AGENTOS_CI_RUNNER: agentos-container
 
 default:
-  image: $CI_REGISTRY_IMAGE/ci/tools@sha256:68b17f9a0317933bd84ce30fa90434f3ba699b4bf5205f3255f536286cc67a0b
+  image: $CI_REGISTRY_IMAGE/ci/tools@sha256:6de0c051a7dfc9b8a6bc482c24dd1e6a9c1d6237f2e7a1a48da0a7f0d978a223
   tags: [$AGENTOS_CI_RUNNER]
   interruptible: true
 
