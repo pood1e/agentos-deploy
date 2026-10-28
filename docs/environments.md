@@ -9,8 +9,8 @@
 | `playbooks/environments/connections.yaml` | 安装 `agentos-connections` Chart，统一管理平台环境 CA、准入配置、服务目录与身份视图 |
 | `playbooks/environments/lifecycle.yaml` | 对比原 release 的身份范围，识别需要撤销目标凭据的身份 |
 
-配置取自方案 Chart 的 `global.agentos`，环境治理、工具分级与身份档案只维护一份。保留身份 `catalog` 只用于服务工具发现。
-方案包先配置环境 OIDC issuer、每身份客户端和目标凭据，再部署环境网关、平台应用和服务连接。平台应用挂载环境 CA，CA 须在应用就绪前发布。
+配置取自方案 Chart 的 `global.agentos`，环境治理、工具分级与身份档案只维护一份。保留身份 `catalog` 用于服务工具发现与浏览器环境 API。
+方案包先配置环境 OIDC issuer、每身份客户端和目标凭据，再部署环境网关、平台应用和服务连接。连接 release 将环境 CA 交给 agentgateway，CA 随连接配置发布。
 
 ## 站点变量
 
@@ -24,7 +24,7 @@
 | `environment_kubeconfig` | 默认 `<agentos_cache>/environments/<name>/kubeconfig.yaml` |
 | `gateway_server_name` | 默认 `<environment>-mcp.<domain>`，用于证书 SAN 与上游 SNI |
 | `gateway_resource` | 默认 `https://<gateway_server_name>:31000/mcp`，作为 OAuth audience |
-| `agentos_values_file` | 包含 `global.agentos` 的方案 Chart 值文件 |
+| `agentos_values_file` | 包含 `global.agentos` 与平台 `identity` 的方案 Chart 值文件 |
 | `environment_connectors` | 连接器后端定义 |
 | `platform_cidr` | 允许访问环境网关的平台地址段 |
 | `platform_kubeconfig` | 平台集群访问配置 |
@@ -36,6 +36,8 @@
 ansible-playbook agentos.platform.access -i <site>/environments.yaml -e @<site>/environments-vars.yaml
 ansible-playbook agentos.platform.connections -i <site>/environments.yaml -e @<site>/environments-vars.yaml
 ```
+
+连接发布从平台与环境 OIDC Discovery 校验 issuer，并读取 HTTPS JWKS 与令牌端点。平台 `identity.audience`、`identity.writerRole` 随原生 JWTProvider 发布；网关使用每身份 Secret 执行 RFC 8693 交换。浏览器环境 API 与 MCP App 只读视图由连接 Chart 的原生路由和授权管理。
 
 ## 资源归属与生命周期
 
