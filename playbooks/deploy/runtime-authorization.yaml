@@ -29,26 +29,3 @@
                       operator: In
                       values: [dataplane, controller]
             ports: [{port: 443, protocol: TCP}]
-
-- name: Restrict native controller access to the control plane
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: networking.k8s.io/v1
-      kind: NetworkPolicy
-      metadata: {name: kagent-control-plane, namespace: "{{ agentos_namespace }}"}
-      spec:
-        podSelector:
-          matchLabels: {app.kubernetes.io/name: kagent, app.kubernetes.io/component: controller}
-        policyTypes: [Ingress]
-        ingress:
-          - from:
-              - podSelector:
-                  matchLabels: {app.kubernetes.io/name: agentos}
-                  matchExpressions:
-                    - {key: app.kubernetes.io/component, operator: In, values: [api, dataplane]}
-              - podSelector:
-                  matchLabels: {agentos.dev/gateway: business}
-              - podSelector:
-                  matchLabels: {app.kubernetes.io/name: kagent, app.kubernetes.io/component: controller}
-            ports: [{port: 8083, protocol: TCP}]
