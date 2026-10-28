@@ -50,11 +50,8 @@ native_identity_volume if {
 	container.volumeMounts[_] == {"name": "identity-client", "mountPath": "/etc/kagent/identity", "readOnly": true}
 }
 
-deny contains "native discovery must use the invocation audience" if not native_discovery_volume
+deny contains "native API must verify invocation service accounts" if not native_invocation_authentication
 
-native_discovery_volume if {
-	volume := native_controller.spec.template.spec.volumes[_]
-	volume.name == "mcp-discovery"
-	volume.projected.sources == [{"serviceAccountToken": {"path": "token", "audience": "kagent-invocation", "expirationSeconds": 3600}}]
+native_invocation_authentication if {
 	native_config.server.auth.serviceAccount.authority == "kubernetes"
 }

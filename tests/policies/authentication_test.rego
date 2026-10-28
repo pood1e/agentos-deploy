@@ -6,6 +6,7 @@ authentication_fixture := {
 	"server": {"auth": {
 		"mode": "oidc",
 		"oidc": {"issuer": "https://identity.example.test", "audience": "agentos-api"},
+		"serviceAccount": {"authority": "kubernetes"},
 	}},
 	"executionAuthorization": {
 		"scopeClaim": "roles",
@@ -55,4 +56,13 @@ test_native_authority_rejects_scalar_gateway_audience if {
 test_native_authority_rejects_insecure_renewal if {
 	config := json.patch(authentication_fixture, [{"op": "replace", "path": "/executionAuthorization/oauth/tokenEndpoint", "value": "http://identity.example.test/token"}])
 	not native_authority with native_config as config with kagent as {"config": config}
+}
+
+test_native_invocation_accepts_kubernetes_identity if {
+	native_invocation_authentication with native_config as authentication_fixture
+}
+
+test_native_invocation_rejects_missing_verifier if {
+	config := json.patch(authentication_fixture, [{"op": "remove", "path": "/server/auth/serviceAccount"}])
+	not native_invocation_authentication with native_config as config
 }

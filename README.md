@@ -36,7 +36,7 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 ```
 
 控制端安装 collection 根目录 `requirements.txt` 的 Python 依赖，并提供 Helm、cosign、ORAS 与 Kustomize。playbook 安装前以平台公钥 `playbooks/deploy/files/cosign.pub` 校验平台 Chart 与镜像的签名、版本和源码提交。
-升级时安装新版已验签 collection 后执行同一 playbook。运行时使用官方 Chart，资源调整经 Helm 4 `postrenderer/v1` 插件与 Kustomize overlay 应用。
+升级时安装新版已验签 collection 后执行同一 playbook。运行时使用固定版本 Chart，资源调整经 Helm 4 `postrenderer/v1` 插件与 Kustomize overlay 应用。
 
 | 站点变量 | 内容 |
 | --- | --- |
@@ -74,7 +74,7 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 `TaskStore` 与 `ToolInventory` 使用绑定 Actor 的原生运行时入口，示例规则采用认证身份许可。TaskStore 持久化与终态清理由 Actor / Session 绑定和派发预约约束，执行准入与撤权另由原生权限链维护。
 
-运行时控制面直接连接 `kagent-controller:8083`。其 NetworkPolicy 允许同命名空间的业务网关、平台 API/dataplane、controller，以及 `ate-system` 的 `atenet-egress` 访问，策略随原生 kagent release 管理。发现凭据使用独立的 `kagent-invocation` audience；站点授予 controller 创建 TokenReview 的权限，并保留 K3s 内置的 NetworkPolicy 控制器。
+运行时控制面直接连接 `kagent-controller:8083`。其 NetworkPolicy 允许同命名空间的业务网关、平台 API/dataplane、controller，以及 `ate-system` 的 `atenet-egress` 访问，策略随原生 kagent release 管理。工具发现按 `RemoteMCPServer.discoveryAuth` 获取 OAuth 或 ServiceAccount 凭据；原生协作使用独立的 `kagent-invocation` audience，站点授予 controller 创建 TokenReview 的权限，并保留 K3s 内置的 NetworkPolicy 控制器。
 
 ```yaml
 kagent_telemetry:

@@ -48,9 +48,6 @@ controller:
     runAsNonRoot: true
     fsGroup: 65532
     seccompProfile: {type: RuntimeDefault}
-  env:
-    - {name: KAGENT_MCP_DISCOVERY_URL, value: "http://{{ app_release_name }}-mcp-gateway.{{ agentos_namespace }}.svc.cluster.local:8080"}
-    - {name: KAGENT_MCP_DISCOVERY_TOKEN_FILE, value: /var/run/kagent-mcp/token}
   volumes:
     - name: execution-credentials
       secret: {secretName: kagent-execution-credentials, defaultMode: 0440}
@@ -59,17 +56,9 @@ controller:
         secretName: {{ site_identity_secret | to_json }}
         defaultMode: 0440
         items: [{key: client-secret, path: client-secret}]
-    - name: mcp-discovery
-      projected:
-        sources:
-          - serviceAccountToken:
-              path: token
-              audience: kagent-invocation
-              expirationSeconds: 3600
   volumeMounts:
     - {name: execution-credentials, mountPath: /etc/kagent/execution, readOnly: true}
     - {name: identity-client, mountPath: /etc/kagent/identity, readOnly: true}
-    - {name: mcp-discovery, mountPath: /var/run/kagent-mcp, readOnly: true}
   imagePullSecrets: [{name: agentos-registry}]
   substrateClientCertificate:
     enabled: true

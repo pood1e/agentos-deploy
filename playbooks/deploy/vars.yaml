@@ -29,7 +29,6 @@ kubectl_ate_checksum: sha256:bbebe540531aa0cd6b436b2f6a0665eca82feba2cb4942bb3e3
 kagent_version: 1.0.0-alpha17
 kagent_runtime_version: 1.0.0-alpha17-agentos.4
 kagent_controller_image: ghcr.io/pood1e/kagent/controller@sha256:326ca5339a0a3005eb706b6471dc7e6a91d9bfff124fddbf0ec6e764081dd4ed
-kagent_cli_checksum: sha256:01fb21bc46130dcffac5b5a720d903122563a4d926f4455cd8234c6112d338a3
 kubeconfig_path: "{{ agentos_cache }}/kubeconfig.yaml"
 helm_binary: "{{ agentos_cache }}/helm/linux-amd64/helm"
 cert_manager_version: v1.21.2
