@@ -62,6 +62,9 @@
     - name: Provision browser session credentials
       ansible.builtin.include_tasks: tasks/site-credentials.yaml
 
+    - name: Publish native runtime trust
+      ansible.builtin.include_tasks: tasks/runtime-trust.yaml
+
     - name: Write application Helm values
       ansible.builtin.copy:
         content: >-
