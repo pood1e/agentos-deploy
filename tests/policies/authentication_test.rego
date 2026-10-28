@@ -9,7 +9,7 @@ authentication_fixture := {
 	}},
 	"executionAuthorization": {
 		"scopeClaim": "roles",
-		"gatewayAudiences": ["http://agentos-model-gateway.agentos.svc.cluster.local:8080", "http://agentos-mcp-gateway.agentos.svc.cluster.local:8080"],
+		"gatewayAudiences": ["http://agentos-gateway.agentos.svc.cluster.local:8080", "http://agentos-mcp-gateway.agentos.svc.cluster.local:8080"],
 		"rules": [{"resourceType": "Session", "verbs": ["get"]}],
 		"encryptionKeyFile": "/etc/kagent/execution/key",
 		"oauth": {
