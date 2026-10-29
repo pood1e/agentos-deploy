@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/pood1e/agentos-deploy/compare/v2.0.0...v2.0.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **runtime:** enforce Claude MCP selections without controller discovery ([#10](https://github.com/pood1e/agentos-deploy/issues/10)) ([33bb776](https://github.com/pood1e/agentos-deploy/commit/33bb7762b11ca2a51f66d9105e126b1deef24ad2))
+
 ## [2.0.0](https://github.com/pood1e/agentos-deploy/compare/v1.0.0...v2.0.0) (2026-10-29)
 
 
