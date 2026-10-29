@@ -1,4 +1,4 @@
 # AgentOS platform release installed by this collection; the build environment provides
 # AGENTOS_PLATFORM_REGISTRY, the registry path of the platform artifacts.
-version: 0.44.1
-revision: a4c620a520e3236300674cd4aba1d0768eb2feaf
+version: 0.44.2
+revision: 81e4c945669b15e1a8d24edb1885979068b2e075
