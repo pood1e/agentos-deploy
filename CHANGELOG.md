@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/pood1e/agentos-deploy/compare/v2.0.1...v2.0.2) (2026-10-29)
+
+
+### Bug Fixes
+
+* **runtime:** pin native machine grant renewal ([#12](https://github.com/pood1e/agentos-deploy/issues/12)) ([42a728e](https://github.com/pood1e/agentos-deploy/commit/42a728e115a004b0fcd272cf942516a6629e8b83))
+
 ## [2.0.1](https://github.com/pood1e/agentos-deploy/compare/v2.0.0...v2.0.1) (2026-10-29)
 
 
