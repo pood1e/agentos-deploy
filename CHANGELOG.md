@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.0](https://github.com/pood1e/agentos-deploy/compare/v1.0.0...v2.0.0) (2026-10-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* **runtime:** return site execution authorization to native kagent ([#4](https://github.com/pood1e/agentos-deploy/issues/4))
+
+### Features
+
+* **runtime:** return site execution authorization to native kagent ([#4](https://github.com/pood1e/agentos-deploy/issues/4)) ([aec5632](https://github.com/pood1e/agentos-deploy/commit/aec5632e8a0bb9f8c2e4e60ce0bdf092586f1258))
+* **runtime:** 发布 Substrate Service DNS 信任根 ([#2](https://github.com/pood1e/agentos-deploy/issues/2)) ([1f047da](https://github.com/pood1e/agentos-deploy/commit/1f047da632dcbe128d3b88bcc3470a146ec072c5))
+
+
+### Bug Fixes
+
+* **runtime:** scope asset upload and optional telemetry configuration ([#9](https://github.com/pood1e/agentos-deploy/issues/9)) ([2e9ce47](https://github.com/pood1e/agentos-deploy/commit/2e9ce47b0ab6a53f0d77d7c9197b49f0c20f8996))
+* **security:** restrict native kagent API ingress ([#6](https://github.com/pood1e/agentos-deploy/issues/6)) ([059c8bb](https://github.com/pood1e/agentos-deploy/commit/059c8bb92ee58a3e4ee897d0038b5b661e882a8f))
+
 ## 1.0.0
 
 - 参考部署从 AgentOS 平台仓库迁出，固定平台 0.43.0。

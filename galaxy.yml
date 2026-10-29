@@ -1,19 +1,23 @@
 namespace: agentos
 name: platform
-version: 1.0.0
+version: 2.0.0
 readme: README.md
-authors: [AgentOS]
+authors:
+  - AgentOS
 description: AgentOS reference deployment
-license: [Apache-2.0]
-tags: [infrastructure, kubernetes]
+license:
+  - Apache-2.0
+tags:
+  - infrastructure
+  - kubernetes
 repository: https://github.com/pood1e/agentos-deploy
 issues: https://github.com/pood1e/agentos-deploy/issues
 dependencies:
-  kubernetes.core: "==6.6.0"
-  ansible.posix: "==2.2.2"
-  community.library_inventory_filtering_v1: "==1.1.5"
-  community.general: "==13.4.0"
-  community.crypto: "==3.5.0"
+  kubernetes.core: '==6.6.0'
+  ansible.posix: '==2.2.2'
+  community.library_inventory_filtering_v1: '==1.1.5'
+  community.general: '==13.4.0'
+  community.crypto: '==3.5.0'
 manifest:
   omit_default_directives: true
   directives:
