@@ -49,6 +49,11 @@
         assets.json: "{{ lookup('file', 'microvm/assets.json') }}"
         stage.py: "{{ lookup('file', 'microvm/stage.py') }}"
 
+- name: Allow verified microVM asset uploads
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('file', 'microvm/assets-networkpolicy.yaml') | from_yaml }}"
+
 - name: Stage verified microVM assets in object storage
   kubernetes.core.k8s:
     state: present

@@ -32,7 +32,7 @@ jobs:
             const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: number});
             if (pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}` ||
                 pr.user.login !== 'github-actions[bot]' ||
-                !pr.head.ref.startsWith('release-please--branches--main--')) {
+                pr.head.ref !== 'release-please--branches--main') {
               throw new Error('Release pull request origin does not match');
             }
             for (let attempt = 0; attempt < 20; attempt++) {

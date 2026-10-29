@@ -38,6 +38,11 @@ deny contains "the controller lacks its native Substrate client certificate" if 
 
 deny contains "global image pull secrets mutate immutable initialization Jobs" if object.get(substrate, "imagePullSecrets", []) != []
 
+deny contains "Substrate infrastructure telemetry requires explicit signal configuration" if {
+	some signal in {"traces", "metrics", "logs"}
+	substrate.otel[signal].enabled != false
+}
+
 provider := yaml.unmarshal(substrate.atelet.imageCredentialProviderConfigYAML).providers[0]
 
 deny contains "credential provider does not cover the configured image registries" if {image | some image in provider.matchImages} != {"registry.example.com", "harness.example.com"}
