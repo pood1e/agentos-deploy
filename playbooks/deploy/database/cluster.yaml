@@ -17,9 +17,7 @@
         instances: 1
         imageName: "{{ postgres_image }}"
         storage: {size: 2Gi, storageClass: local-path}
-        resources:
-          requests: {cpu: 100m, memory: 256Mi}
-          limits: {cpu: "1", memory: 1Gi}
+        resources: "{{ kagent_postgres_resources }}"
         bootstrap: >-
           {{ database_cluster.resources[0].spec.bootstrap if database_cluster.resources | length > 0
              else database_bootstrap | default({'initdb': database_initdb}) }}

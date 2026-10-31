@@ -38,6 +38,7 @@ config:
   database:
     owner: {role: kagent_owner}
     readWrite: {role: kagent_owner}
+    pool: {maxConns: {{ kagent_postgres_pool_max_conns }}}
     vectorEnabled: true
   memory:
     modelConfig: {namespace: "{{ agentos_namespace }}", name: knowledge-embedding}

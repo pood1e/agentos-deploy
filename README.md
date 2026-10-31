@@ -49,6 +49,8 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 | `agentos_cache` | 缓存目录，默认 `$XDG_CACHE_HOME/agentos` 或 `~/.cache/agentos` |
 | `node_hosts` | 可选节点 hosts 记录 `{name, address}` |
 | `kagent_telemetry` | 可选 kagent 原生 `TelemetryConfig`，应用于控制面与运行时默认值 |
+| `kagent_postgres_resources` | 原生 PostgreSQL 的 Kubernetes requests 与 limits，默认请求 100m / 256Mi，上限 1 CPU / 1Gi |
+| `kagent_postgres_pool_max_conns` | 每个 kagent 控制器的 PostgreSQL 连接上限，默认 16；与 Substrate 连接及数据库 `max_connections` 统一分配容量 |
 | `kagent_execution_authorization` | 原生 `ExecutionAuthorizationConfig` 的 `scopeClaim`、`rules` 与 `gatewayAudiences`；资源规则使用原生 `ResourceScopeRule`，覆盖本站启用的 API 与运行时资源 |
 
 collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_registry`，对应所部署的平台版本、源码提交与镜像注册表路径。
