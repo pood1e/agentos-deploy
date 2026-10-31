@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3](https://github.com/pood1e/agentos-deploy/compare/v2.0.2...v2.0.3) (2026-10-31)
+
+
+### Bug Fixes
+
+* **runtime:** budget native PostgreSQL resources and connections ([95a4cf5](https://github.com/pood1e/agentos-deploy/commit/95a4cf5247e0518ad7bce5e36245165a6f141db8))
+
 ## [2.0.2](https://github.com/pood1e/agentos-deploy/compare/v2.0.1...v2.0.2) (2026-10-29)
 
 
