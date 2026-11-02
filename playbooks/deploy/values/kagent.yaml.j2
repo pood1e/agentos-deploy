@@ -30,6 +30,10 @@ config:
       serviceAccount: {authority: kubernetes}
   executionAuthorization:
 {{ kagent_execution_authorization | combine(execution_credentials) | to_nice_yaml(indent=2) | indent(4, true) }}
+{% if kagent_authorization | length %}
+  authorization:
+{{ kagent_authorization | combine({'apiTokenFile': '/etc/kagent/authorization/token', 'caFile': '/etc/kagent/authorization-ca/ca.crt'}) | to_nice_yaml(indent=2) | indent(4, true) }}
+{% endif %}
   harnessImages:
     release: "{{ kagent_runtime_version }}"
     kagent: "{{ harness_defaults.standard.workload.image }}"
@@ -69,6 +73,17 @@ controller:
 {% endif %}
     - name: execution-credentials
       secret: {secretName: kagent-execution-credentials, defaultMode: 0440}
+{% if kagent_authorization | length %}
+    - name: authorization-api
+      secret:
+        secretName: {{ kagent_authorization_api_token_secret.name | to_json }}
+        defaultMode: 0440
+        items: [{key: {{ kagent_authorization_api_token_secret.key | to_json }}, path: token}]
+    - name: authorization-ca
+      secret:
+        secretName: {{ kagent_authorization_ca_secret.name | to_json }}
+        items: [{key: {{ kagent_authorization_ca_secret.key | to_json }}, path: ca.crt}]
+{% endif %}
     - name: identity-client
       secret:
         secretName: {{ site_identity_secret | to_json }}
@@ -86,6 +101,10 @@ controller:
     - {name: identity-ca, mountPath: /etc/kagent/identity-ca, readOnly: true}
 {% endif %}
     - {name: execution-credentials, mountPath: /etc/kagent/execution, readOnly: true}
+{% if kagent_authorization | length %}
+    - {name: authorization-api, mountPath: /etc/kagent/authorization, readOnly: true}
+    - {name: authorization-ca, mountPath: /etc/kagent/authorization-ca, readOnly: true}
+{% endif %}
     - {name: identity-client, mountPath: /etc/kagent/identity, readOnly: true}
     - {name: memory-model, mountPath: /var/run/kagent-memory, readOnly: true}
   imagePullSecrets: [{name: agentos-registry}]

@@ -16,7 +16,7 @@ HELM_PLUGINS="$PWD/playbooks/deploy/helm-plugins" \
 pin() {
   python -c "import sys, yaml; print(yaml.safe_load(open('playbooks/deploy/vars.yaml'))[sys.argv[1]])" "$1"
 }
-for scenario in .cache/check .cache/check/telemetry .cache/check/private-identity; do
+for scenario in .cache/check .cache/check/telemetry .cache/check/private-identity .cache/check/authorization; do
   HELM_PLUGINS="$PWD/playbooks/deploy/helm-plugins" \
     AGENTOS_KUSTOMIZE_OVERLAY="$PWD/playbooks/deploy/kustomize/kagent" \
     AGENTOS_PATCHED_IMAGE="$(pin kagent_controller_image)" \

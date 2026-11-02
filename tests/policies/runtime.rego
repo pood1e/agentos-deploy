@@ -20,6 +20,28 @@ native_config := yaml.unmarshal(file.contents.data["controller.yaml"]) if {
 
 deny contains "native controller configuration is missing" if not native_config
 
+deny contains "OpenFGA authentication and CA paths are missing" if {
+	kagent.config.authorization
+	kagent.config.authorization.apiTokenFile != "/etc/kagent/authorization/token"
+}
+
+deny contains "OpenFGA CA path is missing" if {
+	kagent.config.authorization
+	kagent.config.authorization.caFile != "/etc/kagent/authorization-ca/ca.crt"
+}
+
+deny contains "OpenFGA API credential mount is missing" if {
+	kagent.config.authorization
+	names := {mount.name | some mount in kagent.controller.volumeMounts}
+	not names["authorization-api"]
+}
+
+deny contains "OpenFGA CA mount is missing" if {
+	kagent.config.authorization
+	names := {mount.name | some mount in kagent.controller.volumeMounts}
+	not names["authorization-ca"]
+}
+
 deny contains "controller telemetry differs from the configured signals" if object.get(native_config, "telemetry", null) != kagent.config.telemetry
 
 deny contains "Agent telemetry differs from the configured signals" if object.get(object.get(native_config, "runtimeDefaults", {}), "telemetry", null) != kagent.config.runtimeDefaults.telemetry
