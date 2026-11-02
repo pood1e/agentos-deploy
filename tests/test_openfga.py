@@ -19,7 +19,7 @@ class OpenFGADeploymentTest(unittest.TestCase):
         self.assertEqual(job["kind"], "Job")
         self.assertEqual(job["metadata"]["namespace"], "agentos")
         self.assertIn("@sha256:", cli["image"])
-        self.assertEqual(cli["args"][:2], ["store", "create"])
+        self.assertEqual(cli["args"][:2], ["store", "list"])
         self.assertIn("--api-token=$(API_TOKEN)", cli["args"])
         self.assertIn("--api-url=https://openfga.agentos.svc:8080", cli["args"])
         self.assertEqual(
@@ -37,6 +37,8 @@ class OpenFGADeploymentTest(unittest.TestCase):
             },
             pod["volumes"],
         )
+        self.assertEqual(job["spec"]["backoffLimit"], 0)
+        self.assertEqual(job["spec"]["activeDeadlineSeconds"], 540)
         self.assertFalse(pod["automountServiceAccountToken"])
         self.assertTrue(cli["securityContext"]["readOnlyRootFilesystem"])
         self.assertEqual(cli["securityContext"]["capabilities"]["drop"], ["ALL"])
@@ -49,20 +51,8 @@ class OpenFGADeploymentTest(unittest.TestCase):
         with tarfile.open(chart, "r:gz") as archive:
             model = json.load(archive.extractfile("kagent/files/authorization-model.json"))
         workspace = next(item for item in model["type_definitions"] if item["type"] == "workspace")
-        roles = {
-            "member",
-            "access_admin",
-            "definition_reader",
-            "definition_editor",
-            "workflow_editor",
-            "workflow_publisher",
-            "executor",
-            "auditor",
-            "operator",
-            "dependency_reader",
-            "dependency_user",
-            "dependency_manager",
-        } & workspace["relations"].keys()
+        roles = {"member", "access_admin"}
+        self.assertTrue(roles <= workspace["relations"].keys())
 
         def encode(value):
             return base64.urlsafe_b64encode(value.encode()).decode().rstrip("=")
@@ -80,6 +70,17 @@ class OpenFGADeploymentTest(unittest.TestCase):
             expected,
         )
         self.assertEqual(len(tuples), len(expected))
+        pending = json.loads(
+            (ROOT / ".cache/check/openfga-bootstrap-pending-tuples.json").read_text()
+        )
+        self.assertEqual(
+            {(item["user"], item["relation"], item["object"]) for item in pending},
+            {(user, role, "workspace:workspace-team-a") for role in roles},
+        )
+        self.assertEqual(
+            json.loads((ROOT / ".cache/check/openfga-bootstrap-complete-tuples.json").read_text()),
+            [],
+        )
 
     def test_chart_uses_isolated_postgres_authenticated_tls_and_pinned_images(self):
         values = yaml.safe_load((ROOT / ".cache/check/openfga-values.yaml").read_text())

@@ -77,13 +77,31 @@
       vars:
         openfga_bootstrap_subject: alice
 
+    - name: Render bootstrap bindings for a newly added workspace
+      ansible.builtin.template:
+        src: ../playbooks/deploy/templates/openfga-bootstrap-tuples.json.j2
+        dest: "{{ output }}/openfga-bootstrap-pending-tuples.json"
+        mode: "0600"
+      vars:
+        openfga_bootstrap_subject: alice
+        openfga_excluded_workspaces: [workspace-agentos]
+
+    - name: Render converged workspace bootstrap
+      ansible.builtin.template:
+        src: ../playbooks/deploy/templates/openfga-bootstrap-tuples.json.j2
+        dest: "{{ output }}/openfga-bootstrap-complete-tuples.json"
+        mode: "0600"
+      vars:
+        openfga_bootstrap_subject: alice
+        openfga_excluded_workspaces: [workspace-agentos, workspace-team-a]
+
     - name: Render authorization bootstrap job
       ansible.builtin.template:
         src: ../playbooks/deploy/templates/openfga-bootstrap-job.yaml.j2
         dest: "{{ output }}/openfga-bootstrap-job.yaml"
         mode: "0600"
       vars:
-        openfga_bootstrap_argv: [store, create, --name=agentos, --model=/etc/openfga/input/model.json]
+        openfga_bootstrap_argv: [store, list, --name=agentos]
 
     - name: Render native deployment values
       ansible.builtin.template:

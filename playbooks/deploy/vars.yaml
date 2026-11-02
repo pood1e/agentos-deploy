@@ -39,13 +39,13 @@ substrate_version: 0.6.0-alpha3
 substrate_api_image: ghcr.io/pood1e/substrate/ateapi@sha256:dcf77af2ba564affbf0f77ecd92f8c6fb0ac0aca1d236d2312fdb452f2c49d7d
 substrate_microvm_image: ghcr.io/pood1e/substrate/ateworker-microvm@sha256:c88aa033f712ef783b9d0361cc78ebaf3b3459745e02c0458d430854ed7583d5
 kubectl_ate_checksum: sha256:bbebe540531aa0cd6b436b2f6a0665eca82feba2cb4942bb3e3f997c3c9c4ad1
-kagent_runtime_version: 1.0.0-alpha17-agentos.11
+kagent_runtime_version: 0.0.0-dev.g5501547c52fbea96d935b69f473aff3890205f69
 kagent_charts:
   - name: kagent
-    checksum: 007290378b4e494990fbef6daeada2afcce14b986b6020688cbb1ee14e72809b
+    checksum: f84aa3e2ca8762ff8e80601d25e6f0bb2219d4204b477fa7077067fd40959a83
   - name: kagent-crds
-    checksum: 13c822df3c7d4a420f8167610475bef90b0f786bc5e5d19eba5bcad943b94d7f
-kagent_controller_image: ghcr.io/pood1e/kagent/controller@sha256:bb3775d9bc646b1fcaa517d5b74894c2b24c3c71f96d5960f33a64335c596619
+    checksum: 4e06484b61fed39f31cdfc8ad2336a0ff4c39229010dd09faafe74ed70f38fad
+kagent_controller_image: ghcr.io/pood1e/kagent/controller@sha256:37f7f60af20d8e958b260b3e84b4749b7f207c7786b8cfb2873e5a163c707acb
 kubeconfig_path: "{{ agentos_cache }}/kubeconfig.yaml"
 helm_binary: "{{ agentos_cache }}/helm/linux-amd64/helm"
 cert_manager_version: v1.21.2

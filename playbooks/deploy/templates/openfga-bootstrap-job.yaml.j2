@@ -2,7 +2,8 @@ apiVersion: batch/v1
 kind: Job
 metadata: {name: openfga-bootstrap, namespace: {{ agentos_namespace | to_json }}}
 spec:
-  backoffLimit: 1
+  backoffLimit: 0
+  activeDeadlineSeconds: 540
   ttlSecondsAfterFinished: 3600
   template:
     metadata:
@@ -21,6 +22,9 @@ spec:
           image: {{ openfga_cli_image | to_json }}
           imagePullPolicy: IfNotPresent
           args: {{ (openfga_bootstrap_argv + ['--api-url=https://openfga.' + agentos_namespace + '.svc:8080', '--api-token=$(API_TOKEN)']) | to_json }}
+          resources:
+            requests: {cpu: 20m, memory: 64Mi}
+            limits: {cpu: '1', memory: 256Mi}
           env:
             - name: API_TOKEN
               valueFrom: {secretKeyRef: {name: openfga-auth, key: keys}}
