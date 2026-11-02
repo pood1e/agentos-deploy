@@ -115,6 +115,7 @@ PATH="$PWD/.cache/venv/bin:$PATH" mise exec -- ci/check.sh
 ```
 
 `ci/check.sh` 执行 ansible-lint、语法检查、运行时策略与单元测试，[GitHub Verify](.github/workflows/verify.yaml) 以它作为合并门禁。
+功能修复先合入 `dev`，验证后由 `dev` 合入 `main`；发行流程仅在 `main` 运行。
 release-please 依据 Conventional Commits 维护版本 PR、`galaxy.yml` 版本、变更记录与 tag。升级平台时更新 `platform.yaml`，并同步运行时版本固定值。
 
 构建仓库以 GitLab CI 定时快进同步 main 与 tag，校验固定平台 Chart 的签名并提取默认值后构建 collection；受保护 tag 发布 `$CI_REGISTRY_IMAGE/collections/platform:<version>`，以 `ci/cosign.pub` 对应的密钥签名，签名属性 `version` / `revision` 为 collection 版本与源码提交。CI 镜像由 [ci/images/Dockerfile](ci/images/Dockerfile) 构建。
