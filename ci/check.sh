@@ -16,6 +16,9 @@ HELM_PLUGINS="$PWD/playbooks/deploy/helm-plugins" \
 pin() {
   python -c "import sys, yaml; print(yaml.safe_load(open('playbooks/deploy/vars.yaml'))[sys.argv[1]])" "$1"
 }
+HELM_PLUGINS="$PWD/playbooks/deploy/helm-plugins" \
+  helm template openfga ".cache/check/runtime/openfga-$(pin openfga_chart_version).tgz" \
+  --namespace agentos -f .cache/check/openfga-values.yaml > .cache/check/native-openfga.yaml
 for scenario in .cache/check .cache/check/telemetry .cache/check/private-identity .cache/check/authorization; do
   HELM_PLUGINS="$PWD/playbooks/deploy/helm-plugins" \
     AGENTOS_KUSTOMIZE_OVERLAY="$PWD/playbooks/deploy/kustomize/kagent" \

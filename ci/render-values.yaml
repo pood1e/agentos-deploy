@@ -36,6 +36,15 @@
         mode: "0700"
       loop: ["{{ output }}", "{{ output }}/telemetry", "{{ output }}/private-identity", "{{ output }}/authorization"]
 
+    - name: Cache verified OpenFGA chart for validation
+      ansible.builtin.include_tasks: ../playbooks/deploy/tasks/openfga-chart.yaml
+
+    - name: Render OpenFGA deployment values
+      ansible.builtin.template:
+        src: ../playbooks/deploy/values/openfga.yaml.j2
+        dest: "{{ output }}/openfga-values.yaml"
+        mode: "0600"
+
     - name: Prepare native runtime charts
       ansible.builtin.include_tasks: ../playbooks/deploy/tasks/runtime-charts.yaml
 

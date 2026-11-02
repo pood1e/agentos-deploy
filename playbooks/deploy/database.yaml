@@ -48,6 +48,34 @@
       when: database_credentials.resources | length == 0
       no_log: true
 
+    - name: Discover OpenFGA database credentials
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        name: openfga-postgres-app
+        namespace: "{{ agentos_namespace }}"
+      register: openfga_database_credentials
+      no_log: true
+
+    - name: Create OpenFGA database credentials
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: openfga-postgres-app
+            namespace: "{{ agentos_namespace }}"
+            labels: {cnpg.io/reload: "true"}
+          type: kubernetes.io/basic-auth
+          data:
+            username: "{{ 'openfga_owner' | b64encode }}"
+            password: >-
+              {{ lookup('password', playbook_dir + '/../.cache/openfga-postgres-password',
+                 length=48, chars=['ascii_letters', 'digits']) | b64encode }}
+      when: openfga_database_credentials.resources | length == 0
+      no_log: true
+
     - name: Configure PostgreSQL cluster
       ansible.builtin.import_tasks: database/cluster.yaml
 
@@ -75,4 +103,27 @@
       loop:
         - {name: kagent-postgres, namespace: "{{ agentos_namespace }}"}
         - {name: substrate-postgres, namespace: ate-system}
+      no_log: true
+
+    - name: Read OpenFGA database credentials
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        name: openfga-postgres-app
+        namespace: "{{ agentos_namespace }}"
+      register: openfga_database_credentials
+      no_log: true
+
+    - name: Configure OpenFGA database connection
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata: {name: openfga-postgres, namespace: "{{ agentos_namespace }}"}
+          type: Opaque
+          data:
+            uri: >-
+              {{ ('postgres://openfga_owner:' + (openfga_database_credentials.resources[0].data.password | b64decode)
+                + '@kagent-postgres-rw.' + agentos_namespace + '.svc:5432/openfga?sslmode=require') | b64encode }}
       no_log: true

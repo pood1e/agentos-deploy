@@ -4,6 +4,9 @@
 - name: Provision agentgateway
   ansible.builtin.import_playbook: gateway.yaml
 
+- name: Provision native authorization service
+  ansible.builtin.import_playbook: openfga.yaml
+
 - name: Install Agent Substrate and kagent
   hosts: localhost
   connection: local

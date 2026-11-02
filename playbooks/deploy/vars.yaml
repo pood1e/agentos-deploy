@@ -16,11 +16,18 @@ app_chart_version: "{{ delivery_version }}"
 app_chart_revision: "{{ delivery_revision }}"
 app_chart_public_key: "{{ delivery_public_key }}"
 cnpg_chart_version: 0.29.1
+openfga_chart_version: 0.3.19
+openfga_chart_checksum: 75b97b9b328b269c2f576b24ebaa9dd11e5909a57f4db5f53f0038c822639cb4
+openfga_image: docker.io/openfga/openfga:v1.22.1@sha256:b852071314f1fda1194d341a6ebac0a4f619b3cd87a6626d2ccc7048af4ec671
+openfga_wait_image: docker.io/groundnuty/k8s-wait-for:v2.0@sha256:c14d7271e4013b24b34ef0d7144c4610577d0e9110ccc26b163fa28089fa1f4e
 postgres_image: ghcr.io/cloudnative-pg/postgresql:18.6-202610120828-standard-trixie@sha256:c7747d8d1049fff9cf30d9cd83d14d609c957afb5ffbcd114145f393ea1850e1
 kagent_postgres_resources:
   requests: {cpu: 100m, memory: 256Mi}
   limits: {cpu: "1", memory: 1Gi}
 kagent_postgres_pool_max_conns: 16
+openfga_resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {cpu: "1", memory: 512Mi}
 k3s_version: v1.37.1+k3s1
 k3s_checksum: sha256:92b94582eb7b34a8cf532e6006842b9ed215a6783cf56a3dd6271fd35243b2c0
 k3s_install_checksum: sha256:ed01f89fd977bf20ac1516bbebf8370bf3ddbaa55dac8aba610956a4c78cc00b
