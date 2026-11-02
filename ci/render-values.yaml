@@ -35,7 +35,7 @@
         path: "{{ item }}"
         state: directory
         mode: "0700"
-      loop: ["{{ output }}", "{{ output }}/telemetry", "{{ output }}/private-identity", "{{ output }}/authorization"]
+      loop: ["{{ output }}", "{{ output }}/telemetry", "{{ output }}/private-identity", "{{ output }}/authorization", "{{ output }}/multi-workspace"]
 
     - name: Cache verified OpenFGA chart for validation
       ansible.builtin.include_tasks: ../playbooks/deploy/tasks/openfga-chart.yaml
@@ -55,6 +55,23 @@
         dest: "{{ output }}/{{ item }}-values.yaml"
         mode: "0600"
       loop: [kagent, substrate]
+
+    - name: Render multi-workspace native values
+      ansible.builtin.template:
+        src: ../playbooks/deploy/values/kagent.yaml.j2
+        dest: "{{ output }}/multi-workspace/kagent-values.yaml"
+        mode: "0600"
+      vars:
+        app_values:
+          identity: {issuer: 'https://identity.example.test', audience: agentos-api, clientId: agentos-web}
+          route: *route
+          api:
+            workspaces:
+              - namespace: team-a
+                release: agentos-team-a
+                entryAgent: assistant
+                harness: standard
+                kagentURL: http://kagent-controller.agentos.svc.cluster.local:8083
 
     - name: Render native execution ingress
       ansible.builtin.template:

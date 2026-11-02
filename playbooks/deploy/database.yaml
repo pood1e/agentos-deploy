@@ -23,7 +23,7 @@
           apiVersion: v1
           kind: Namespace
           metadata: {name: "{{ item }}"}
-      loop: ["{{ agentos_namespace }}", ate-system]
+      loop: "{{ (site_workspace_namespaces + ['ate-system']) | unique | list }}"
 
     - name: Discover database credentials
       kubernetes.core.k8s_info:

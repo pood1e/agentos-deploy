@@ -56,6 +56,7 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 | `kagent_execution_authorization` | 原生 `ExecutionAuthorizationConfig` 的 `scopeClaim`、`rules` 与 `gatewayAudiences`；资源规则使用原生 `ResourceScopeRule`，覆盖本站启用的 API 与运行时资源 |
 
 collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_registry`，对应所部署的平台版本、源码提交与镜像注册表路径。
+`app_values.agentos.api.workspaces` 声明附加工作空间目标；collection 为这些 namespace 建立原生控制器的 watch 与 RBAC 范围。各目标的应用 release 按其 Chart 值部署。
 
 | 凭据输入 | 内容 |
 | --- | --- |

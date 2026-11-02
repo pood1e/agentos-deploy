@@ -63,6 +63,9 @@ kagent_execution_authorization:
   scopeClaim: roles
   rules: []
 site_platform_values: "{{ (app_values | default({})).get('agentos', app_values | default({})) }}"
+site_workspace_namespaces: >-
+  {{ ([agentos_namespace] + (site_platform_values.get('api', {}).get('workspaces', [])
+     | map(attribute='namespace') | list)) | unique | list }}
 site_gateway_peers: >-
   {{ site_platform_values.route.get('from', [{'namespaceSelector': {'matchLabels': {'kubernetes.io/metadata.name': 'kube-system'}},
                                             'podSelector': {'matchLabels': {'app.kubernetes.io/name': 'traefik'}}}]) }}

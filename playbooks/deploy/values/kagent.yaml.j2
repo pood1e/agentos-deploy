@@ -11,7 +11,7 @@
 {% set unused = execution_credentials.oauth.update({'caFile': '/etc/kagent/identity-ca/ca.crt'}) -%}
 {% endif -%}
 global:
-  watchNamespaces: ["{{ agentos_namespace }}"]
+  watchNamespaces: {{ site_workspace_namespaces | to_json }}
 providers: null
 database:
   postgres:
