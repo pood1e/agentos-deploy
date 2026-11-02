@@ -34,7 +34,7 @@
         path: "{{ item }}"
         state: directory
         mode: "0700"
-      loop: ["{{ output }}", "{{ output }}/telemetry", "{{ output }}/private-identity"]
+      loop: ["{{ output }}", "{{ output }}/telemetry", "{{ output }}/private-identity", "{{ output }}/authorization"]
 
     - name: Prepare native runtime charts
       ansible.builtin.include_tasks: ../playbooks/deploy/tasks/runtime-charts.yaml
@@ -81,3 +81,15 @@
             audience: agentos-api
             clientId: agentos-web
             caCertificateRef: {name: identity-ca, key: issuer.pem}
+
+    - name: Render native resource authorization
+      ansible.builtin.template:
+        src: ../playbooks/deploy/values/kagent.yaml.j2
+        dest: "{{ output }}/authorization/kagent-values.yaml"
+        mode: "0600"
+      vars:
+        kagent_authorization:
+          apiUrl: https://openfga.example.test
+          storeId: 01HXYZ1234567890ABCDEFGHJK
+          authorizationModelId: 01HXYZ1234567890ABCDEFGHJL
+          groupClaim: roles
