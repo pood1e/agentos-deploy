@@ -12,6 +12,8 @@
       kubeconfig: "{{ kubeconfig_path }}"
     kubernetes.core.k8s_info:
       kubeconfig: "{{ kubeconfig_path }}"
+    kubernetes.core.k8s_log:
+      kubeconfig: "{{ kubeconfig_path }}"
   tasks:
     - name: Issue internal OpenFGA CA
       kubernetes.core.k8s:
@@ -124,6 +126,8 @@
               - from:
                   - podSelector:
                       matchLabels: {app.kubernetes.io/name: kagent, app.kubernetes.io/component: controller}
+                  - podSelector:
+                      matchLabels: {app.kubernetes.io/name: openfga-bootstrap}
                 ports: [{port: 8080, protocol: TCP}]
 
     - name: Install OpenFGA
@@ -137,3 +141,6 @@
         reset_values: true
         wait: true
         timeout: 10m
+
+    - name: Bootstrap native authorization
+      ansible.builtin.include_tasks: tasks/openfga-bootstrap.yaml

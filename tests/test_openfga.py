@@ -1,5 +1,8 @@
 """Validate the rendered OpenFGA deployment boundary."""
 
+import base64
+import json
+import tarfile
 import unittest
 from pathlib import Path
 
@@ -9,6 +12,46 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class OpenFGADeploymentTest(unittest.TestCase):
+    def test_packaged_model_bootstraps_exact_workspace_identities(self):
+        version = yaml.safe_load((ROOT / "playbooks/deploy/vars.yaml").read_text())[
+            "kagent_runtime_version"
+        ]
+        chart = ROOT / f".cache/check/runtime/kagent-{version}.tgz"
+        with tarfile.open(chart, "r:gz") as archive:
+            model = json.load(archive.extractfile("kagent/files/authorization-model.json"))
+        workspace = next(item for item in model["type_definitions"] if item["type"] == "workspace")
+        roles = {
+            "member",
+            "access_admin",
+            "definition_reader",
+            "definition_editor",
+            "workflow_editor",
+            "workflow_publisher",
+            "executor",
+            "auditor",
+            "operator",
+            "dependency_reader",
+            "dependency_user",
+            "dependency_manager",
+        } & workspace["relations"].keys()
+
+        def encode(value):
+            return base64.urlsafe_b64encode(value.encode()).decode().rstrip("=")
+
+        principal = encode("oidc:https://identity.example.test") + "." + encode("alice")
+        user = "principal:" + encode(principal)
+        tuples = json.loads((ROOT / ".cache/check/openfga-bootstrap-tuples.json").read_text())
+        expected = {
+            (user, role, f"workspace:{uid}")
+            for uid in ("workspace-agentos", "workspace-team-a")
+            for role in roles
+        }
+        self.assertEqual(
+            {(item["user"], item["relation"], item["object"]) for item in tuples},
+            expected,
+        )
+        self.assertEqual(len(tuples), len(expected))
+
     def test_chart_uses_isolated_postgres_authenticated_tls_and_pinned_images(self):
         values = yaml.safe_load((ROOT / ".cache/check/openfga-values.yaml").read_text())
         manifests = {

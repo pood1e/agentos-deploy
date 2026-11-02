@@ -49,6 +49,34 @@
     - name: Prepare native runtime charts
       ansible.builtin.include_tasks: ../playbooks/deploy/tasks/runtime-charts.yaml
 
+    - name: Read packaged authorization model
+      ansible.builtin.command:
+        argv:
+          - tar
+          - -xOzf
+          - "{{ output }}/runtime/kagent-{{ kagent_runtime_version }}.tgz"
+          - kagent/files/authorization-model.json
+      register: openfga_model
+      changed_when: false
+
+    - name: Prepare authorization bootstrap fixture
+      ansible.builtin.set_fact:
+        openfga_model_workspace_relations: >-
+          {{ ((openfga_model.stdout | from_json).type_definitions
+              | selectattr('type', 'equalto', 'workspace') | first).relations }}
+        openfga_workspaces:
+          results:
+            - resources: [{metadata: {uid: workspace-agentos}}]
+            - resources: [{metadata: {uid: workspace-team-a}}]
+
+    - name: Render authorization bootstrap bindings
+      ansible.builtin.template:
+        src: ../playbooks/deploy/templates/openfga-bootstrap-tuples.json.j2
+        dest: "{{ output }}/openfga-bootstrap-tuples.json"
+        mode: "0600"
+      vars:
+        openfga_bootstrap_subject: alice
+
     - name: Render native deployment values
       ansible.builtin.template:
         src: "../playbooks/deploy/values/{{ item }}.yaml.j2"

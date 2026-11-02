@@ -20,6 +20,8 @@ openfga_chart_version: 0.3.19
 openfga_chart_checksum: 75b97b9b328b269c2f576b24ebaa9dd11e5909a57f4db5f53f0038c822639cb4
 openfga_image: docker.io/openfga/openfga:v1.22.1@sha256:b852071314f1fda1194d341a6ebac0a4f619b3cd87a6626d2ccc7048af4ec671
 openfga_wait_image: docker.io/groundnuty/k8s-wait-for:v2.0@sha256:c14d7271e4013b24b34ef0d7144c4610577d0e9110ccc26b163fa28089fa1f4e
+openfga_cli_image: docker.io/openfga/cli:v0.8.2@sha256:31a565d14d1c5ca8170d3a2225eb66517d9f490539967bcb3421613c5e2538a4
+openfga_bootstrap_subject: ""
 postgres_image: ghcr.io/cloudnative-pg/postgresql:18.6-202610120828-standard-trixie@sha256:c7747d8d1049fff9cf30d9cd83d14d609c957afb5ffbcd114145f393ea1850e1
 kagent_postgres_resources:
   requests: {cpu: 100m, memory: 256Mi}

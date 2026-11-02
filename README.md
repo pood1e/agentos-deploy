@@ -49,14 +49,14 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 | `agentos_cache` | 缓存目录，默认 `$XDG_CACHE_HOME/agentos` 或 `~/.cache/agentos` |
 | `node_hosts` | 可选节点 hosts 记录 `{name, address}` |
 | `kagent_telemetry` | 可选 kagent 原生 `TelemetryConfig`，应用于控制面与运行时默认值 |
-| `kagent_authorization` | 可选原生 OpenFGA `apiUrl`、`storeId`、`authorizationModelId` 与 `groupClaim`；站点先部署服务与授权模型 |
+| `openfga_bootstrap_subject` | 初始管理员的 OIDC `sub`；站点以当前工作空间 UID 建立成员与管理员绑定 |
 | `kagent_authorization_api_token_secret`、`kagent_authorization_ca_secret` | OpenFGA API 凭据和 CA 的 Secret `{name, key}`，默认分别为 `openfga-auth/keys` 与 `openfga-ca/tls.crt` |
 | `kagent_postgres_resources` | 原生 PostgreSQL 的 Kubernetes requests 与 limits，默认请求 100m / 256Mi，上限 1 CPU / 1Gi |
 | `kagent_postgres_pool_max_conns` | 每个 kagent 控制器的 PostgreSQL 连接上限，默认 16；与 Substrate 连接及数据库 `max_connections` 统一分配容量 |
 | `kagent_execution_authorization` | 原生 `ExecutionAuthorizationConfig` 的 `scopeClaim`、`rules` 与 `gatewayAudiences`；资源规则使用原生 `ResourceScopeRule`，覆盖本站启用的 API 与运行时资源 |
 
 collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_registry`，对应所部署的平台版本、源码提交与镜像注册表路径。
-`app_values.agentos.api.workspaces` 声明附加工作空间目标；collection 为这些 namespace 建立原生控制器的 watch 与 RBAC 范围。各目标的应用 release 按其 Chart 值部署。
+`app_values.agentos.api.workspaces` 声明附加工作空间目标；collection 为这些 namespace 建立原生控制器的 watch 与 RBAC 范围。
 
 | 凭据输入 | 内容 |
 | --- | --- |
@@ -78,7 +78,7 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 `kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/agentos/1.0.0-alpha17/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 逐项列出模型与 MCP 网关的精确 HTTP(S) origin，并包含每个环境服务的 `http://<environment>-<project>-mcp-gateway.<namespace>.svc.cluster.local:8080`，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单。
 
-站点启用资源权限时，`kagent_authorization` 使用 OpenFGA 原生配置；collection 从独立 Secret 挂载 API 凭据与 CA。部署前须建立与运行时二进制一致的模型、store 和初始管理员绑定。
+站点从已校验的 kagent Chart 读取原生授权模型，在独立 OpenFGA store 中安装模型并建立初始管理员绑定；store 与 model ID 保存在 `openfga-state` ConfigMap，升级时按模型摘要更新。初始管理员轮换通过资源绑定接口执行。collection 为 kagent 配置该 store，并从独立 Secret 挂载 OpenFGA API 凭据与 CA。
 
 `TaskStore` 与 `ToolInventory` 使用绑定 Actor 的原生运行时入口，示例规则采用认证身份许可。TaskStore 持久化与终态清理由 Actor / Session 绑定和派发预约约束，执行准入与撤权另由原生权限链维护。
 
