@@ -12,6 +12,35 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class OpenFGADeploymentTest(unittest.TestCase):
+    def test_bootstrap_job_uses_pinned_cli_with_trusted_authentication(self):
+        job = yaml.safe_load((ROOT / ".cache/check/openfga-bootstrap-job.yaml").read_text())
+        pod = job["spec"]["template"]["spec"]
+        cli = pod["containers"][0]
+        self.assertEqual(job["kind"], "Job")
+        self.assertEqual(job["metadata"]["namespace"], "agentos")
+        self.assertIn("@sha256:", cli["image"])
+        self.assertEqual(cli["args"][:2], ["store", "create"])
+        self.assertIn("--api-token=$(API_TOKEN)", cli["args"])
+        self.assertIn("--api-url=https://openfga.agentos.svc:8080", cli["args"])
+        self.assertEqual(
+            cli["env"][0]["valueFrom"]["secretKeyRef"],
+            {"name": "openfga-auth", "key": "keys"},
+        )
+        self.assertIn({"name": "SSL_CERT_FILE", "value": "/etc/openfga/ca/tls.crt"}, cli["env"])
+        self.assertIn(
+            {
+                "name": "ca",
+                "secret": {
+                    "secretName": "openfga-ca",
+                    "items": [{"key": "tls.crt", "path": "tls.crt"}],
+                },
+            },
+            pod["volumes"],
+        )
+        self.assertFalse(pod["automountServiceAccountToken"])
+        self.assertTrue(cli["securityContext"]["readOnlyRootFilesystem"])
+        self.assertEqual(cli["securityContext"]["capabilities"]["drop"], ["ALL"])
+
     def test_packaged_model_bootstraps_exact_workspace_identities(self):
         version = yaml.safe_load((ROOT / "playbooks/deploy/vars.yaml").read_text())[
             "kagent_runtime_version"

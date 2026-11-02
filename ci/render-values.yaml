@@ -77,6 +77,14 @@
       vars:
         openfga_bootstrap_subject: alice
 
+    - name: Render authorization bootstrap job
+      ansible.builtin.template:
+        src: ../playbooks/deploy/templates/openfga-bootstrap-job.yaml.j2
+        dest: "{{ output }}/openfga-bootstrap-job.yaml"
+        mode: "0600"
+      vars:
+        openfga_bootstrap_argv: [store, create, --name=agentos, --model=/etc/openfga/input/model.json]
+
     - name: Render native deployment values
       ansible.builtin.template:
         src: "../playbooks/deploy/values/{{ item }}.yaml.j2"
