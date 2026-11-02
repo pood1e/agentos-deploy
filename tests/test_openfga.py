@@ -37,6 +37,23 @@ class OpenFGADeploymentTest(unittest.TestCase):
             {"name": "tls", "mountPath": "/etc/openfga/tls", "readOnly": True},
             server["volumeMounts"],
         )
+        self.assertIn(
+            {"name": "postgres-ca", "mountPath": "/etc/openfga/postgres", "readOnly": True},
+            server["volumeMounts"],
+        )
+        self.assertIn(
+            {"name": "postgres-ca", "mountPath": "/etc/openfga/postgres", "readOnly": True},
+            migration["volumeMounts"],
+        )
+        ca_volume = {
+            "name": "postgres-ca",
+            "secret": {
+                "secretName": "kagent-postgres-ca",
+                "items": [{"key": "ca.crt", "path": "ca.crt"}],
+            },
+        }
+        self.assertIn(ca_volume, deployment["volumes"])
+        self.assertIn(ca_volume, manifests["Job"]["spec"]["template"]["spec"]["volumes"])
         credentials = {env["name"]: env for env in server["env"]}
         self.assertEqual(
             credentials["OPENFGA_AUTHN_PRESHARED_KEYS"]["valueFrom"]["secretKeyRef"],

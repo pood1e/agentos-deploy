@@ -125,5 +125,6 @@
           data:
             uri: >-
               {{ ('postgres://openfga_owner:' + (openfga_database_credentials.resources[0].data.password | b64decode)
-                + '@kagent-postgres-rw.' + agentos_namespace + '.svc:5432/openfga?sslmode=require') | b64encode }}
+                + '@kagent-postgres-rw.' + agentos_namespace
+                + '.svc:5432/openfga?sslmode=verify-full&sslrootcert=/etc/openfga/postgres/ca.crt') | b64encode }}
       no_log: true

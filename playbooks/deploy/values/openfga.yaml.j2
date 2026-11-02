@@ -14,6 +14,10 @@ datastore:
   applyMigrations: true
   waitForMigrations: true
   migrationType: job
+  migrations:
+    resources:
+      requests: {cpu: 50m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 256Mi}
 authn:
   method: preshared
   preshared: {keysSecret: openfga-auth}
@@ -38,5 +42,18 @@ resources: {{ openfga_resources | to_json }}
 extraVolumes:
   - name: tls
     secret: {secretName: openfga-tls}
+  - name: postgres-ca
+    secret:
+      secretName: {{ openfga_postgres_ca_secret }}
+      items: [{key: ca.crt, path: ca.crt}]
 extraVolumeMounts:
   - {name: tls, mountPath: /etc/openfga/tls, readOnly: true}
+  - {name: postgres-ca, mountPath: /etc/openfga/postgres, readOnly: true}
+migrate:
+  extraVolumes:
+    - name: postgres-ca
+      secret:
+        secretName: {{ openfga_postgres_ca_secret }}
+        items: [{key: ca.crt, path: ca.crt}]
+  extraVolumeMounts:
+    - {name: postgres-ca, mountPath: /etc/openfga/postgres, readOnly: true}
