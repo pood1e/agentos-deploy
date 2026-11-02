@@ -22,7 +22,7 @@
       auth: {registry.example.com: {}, harness.example.com: {}}
     output: "{{ playbook_dir }}/../.cache/check"
     agentos_cache: "{{ output }}"
-    openfga_postgres_ca_secret: kagent-postgres-ca
+    openfga_postgres_ca_secret: openfga-postgres-ca
   tasks:
     - name: Use the controller Python environment
       ansible.builtin.set_fact:

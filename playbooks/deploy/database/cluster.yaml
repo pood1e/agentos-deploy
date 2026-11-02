@@ -45,54 +45,6 @@
     wait_condition: {type: Ready, status: "True"}
     wait_timeout: 900
 
-- name: Provision OpenFGA database role
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: postgresql.cnpg.io/v1
-      kind: DatabaseRole
-      metadata: {name: openfga-owner, namespace: "{{ agentos_namespace }}"}
-      spec:
-        cluster: {name: kagent-postgres}
-        name: openfga_owner
-        login: true
-        superuser: false
-        passwordSecret: {name: openfga-postgres-app}
-
-- name: Wait for OpenFGA database role
-  kubernetes.core.k8s_info:
-    api_version: postgresql.cnpg.io/v1
-    kind: DatabaseRole
-    name: openfga-owner
-    namespace: "{{ agentos_namespace }}"
-  register: openfga_database_role
-  until: openfga_database_role.resources | length > 0 and openfga_database_role.resources[0].status.applied | default(false)
-  retries: 30
-  delay: 2
-
-- name: Provision OpenFGA database
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: postgresql.cnpg.io/v1
-      kind: Database
-      metadata: {name: openfga, namespace: "{{ agentos_namespace }}"}
-      spec:
-        cluster: {name: kagent-postgres}
-        name: openfga
-        owner: openfga_owner
-
-- name: Wait for OpenFGA database
-  kubernetes.core.k8s_info:
-    api_version: postgresql.cnpg.io/v1
-    kind: Database
-    name: openfga
-    namespace: "{{ agentos_namespace }}"
-  register: openfga_database
-  until: openfga_database.resources | length > 0 and openfga_database.resources[0].status.applied | default(false)
-  retries: 30
-  delay: 2
-
 - name: Restrict database ingress
   kubernetes.core.k8s:
     state: present
@@ -118,8 +70,6 @@
                   matchLabels: {app: ate-api-server}
               - podSelector:
                   matchLabels: {cnpg.io/cluster: kagent-postgres}
-              - podSelector:
-                  matchLabels: {app.kubernetes.io/name: openfga, app.kubernetes.io/instance: openfga}
             ports: [{port: 5432, protocol: TCP}]
           - from:
               - namespaceSelector:

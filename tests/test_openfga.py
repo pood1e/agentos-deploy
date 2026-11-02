@@ -2,7 +2,9 @@
 
 import base64
 import json
+import subprocess
 import tarfile
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -12,6 +14,62 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class OpenFGADeploymentTest(unittest.TestCase):
+    def test_database_cluster_is_isolated_and_preserves_bootstrap(self):
+        deploy = ROOT / "playbooks/deploy"
+        tasks = yaml.safe_load((deploy / "database/openfga.yaml").read_text())
+        cluster = next(
+            task for task in tasks if task["name"] == "Converge OpenFGA PostgreSQL cluster"
+        )
+        definition = cluster["kubernetes.core.k8s"]["definition"]
+        image = yaml.safe_load((deploy / "vars.yaml").read_text())["postgres_image"]
+        initial = {
+            "initdb": {
+                "database": "openfga",
+                "owner": "openfga_owner",
+                "secret": {"name": "openfga-postgres-app"},
+            }
+        }
+        for existing in (None, {"recovery": {"source": "backup"}}):
+            with self.subTest(existing=existing), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory)
+                playbook = [
+                    {
+                        "name": "Render OpenFGA PostgreSQL",
+                        "hosts": "localhost",
+                        "connection": "local",
+                        "gather_facts": False,
+                        "vars": {
+                            "agentos_namespace": "agentos",
+                            "postgres_image": image,
+                            "openfga_database_cluster": {
+                                "resources": [{"spec": {"bootstrap": existing}}] if existing else []
+                            },
+                            "definition": definition,
+                        },
+                        "tasks": [
+                            {
+                                "name": "Render cluster",
+                                "ansible.builtin.copy": {
+                                    "content": "{{ definition | to_nice_yaml }}",
+                                    "dest": str(output / "cluster.yaml"),
+                                    "mode": "0600",
+                                },
+                            }
+                        ],
+                    }
+                ]
+                (output / "render.yaml").write_text(yaml.safe_dump(playbook))
+                result = subprocess.run(
+                    ["ansible-playbook", str(output / "render.yaml")],
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                actual = yaml.safe_load((output / "cluster.yaml").read_text())
+                self.assertEqual(actual["metadata"]["name"], "openfga-postgres")
+                self.assertEqual(actual["spec"]["bootstrap"], existing or initial)
+                self.assertEqual(actual["spec"]["imageName"], image)
+
     def test_bootstrap_job_uses_pinned_cli_with_trusted_authentication(self):
         job = yaml.safe_load((ROOT / ".cache/check/openfga-bootstrap-job.yaml").read_text())
         pod = job["spec"]["template"]["spec"]
@@ -121,7 +179,7 @@ class OpenFGADeploymentTest(unittest.TestCase):
         ca_volume = {
             "name": "postgres-ca",
             "secret": {
-                "secretName": "kagent-postgres-ca",
+                "secretName": "openfga-postgres-ca",
                 "items": [{"key": "ca.crt", "path": "ca.crt"}],
             },
         }
