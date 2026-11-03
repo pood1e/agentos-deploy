@@ -1,11 +1,7 @@
-replicaCount: 2
+replicaCount: 1
 image:
   repository: {{ openfga_image.split(':', 1)[0] }}
   tag: {{ openfga_image.split(':', 1)[1] | to_json }}
-  pullPolicy: IfNotPresent
-initContainer:
-  repository: {{ openfga_wait_image.split(':', 1)[0] }}
-  tag: {{ openfga_wait_image.split(':', 1)[1] | to_json }}
   pullPolicy: IfNotPresent
 datastore:
   engine: postgres
@@ -13,7 +9,7 @@ datastore:
   maxOpenConns: 16
   applyMigrations: true
   waitForMigrations: true
-  migrationType: job
+  migrationType: initContainer
   migrations:
     resources:
       requests: {cpu: 50m, memory: 64Mi}
@@ -50,10 +46,5 @@ extraVolumeMounts:
   - {name: tls, mountPath: /etc/openfga/tls, readOnly: true}
   - {name: postgres-ca, mountPath: /etc/openfga/postgres, readOnly: true}
 migrate:
-  extraVolumes:
-    - name: postgres-ca
-      secret:
-        secretName: {{ openfga_postgres_ca_secret }}
-        items: [{key: ca.crt, path: ca.crt}]
   extraVolumeMounts:
     - {name: postgres-ca, mountPath: /etc/openfga/postgres, readOnly: true}

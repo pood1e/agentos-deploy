@@ -149,10 +149,14 @@ class OpenFGADeploymentTest(unittest.TestCase):
         }
         deployment = manifests["Deployment"]["spec"]["template"]["spec"]
         server = deployment["containers"][0]
-        migration = manifests["Job"]["spec"]["template"]["spec"]["containers"][0]
+        migration = deployment["initContainers"][0]
 
+        self.assertEqual(values["replicaCount"], 1)
         self.assertEqual(values["datastore"]["engine"], "postgres")
         self.assertEqual(values["datastore"]["uriSecret"], "openfga-postgres")
+        self.assertEqual(values["datastore"]["migrationType"], "initContainer")
+        self.assertTrue(values["datastore"]["waitForMigrations"])
+        self.assertNotIn("Job", manifests)
         self.assertEqual(
             values["authn"], {"method": "preshared", "preshared": {"keysSecret": "openfga-auth"}}
         )
@@ -160,7 +164,7 @@ class OpenFGADeploymentTest(unittest.TestCase):
         self.assertFalse(values["playground"]["enabled"])
         self.assertIn("@sha256:", server["image"])
         self.assertEqual(server["image"], migration["image"])
-        self.assertIn("@sha256:", deployment["initContainers"][0]["image"])
+        self.assertEqual(migration["name"], "migrate-database")
         self.assertIn(
             {"name": "tls", "secret": {"secretName": "openfga-tls"}}, deployment["volumes"]
         )
@@ -184,7 +188,6 @@ class OpenFGADeploymentTest(unittest.TestCase):
             },
         }
         self.assertIn(ca_volume, deployment["volumes"])
-        self.assertIn(ca_volume, manifests["Job"]["spec"]["template"]["spec"]["volumes"])
         credentials = {env["name"]: env for env in server["env"]}
         self.assertEqual(
             credentials["OPENFGA_AUTHN_PRESHARED_KEYS"]["valueFrom"]["secretKeyRef"],
