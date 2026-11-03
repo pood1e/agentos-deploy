@@ -4,6 +4,10 @@
 - name: Provision agentgateway
   ansible.builtin.import_playbook: gateway.yaml
 
+- name: Provision native authorization service
+  ansible.builtin.import_playbook: openfga.yaml
+  tags: [kagent]
+
 - name: Install Agent Substrate and kagent
   hosts: localhost
   connection: local
@@ -254,6 +258,7 @@
         create_namespace: true
         wait: true
         timeout: 10m
+      tags: [kagent]
 
     - name: Prepare kagent image pull credentials
       ansible.builtin.include_tasks:
@@ -303,6 +308,7 @@
         namespace: "{{ agentos_namespace }}"
         wait: true
         wait_timeout: 300
+      tags: [kagent]
 
     - name: Prepare model-independent runtime check
       kubernetes.core.k8s:

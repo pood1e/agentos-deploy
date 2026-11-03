@@ -10,6 +10,10 @@
   ansible.builtin.import_playbook: helm.yaml
   tags: [runtime, app, ingress, voice]
 
+- name: Prepare certificate controller
+  ansible.builtin.import_playbook: certificates.yaml
+  tags: [runtime, ingress]
+
 - name: Install platform runtime
   ansible.builtin.import_playbook: runtime.yaml
   tags: [runtime]
