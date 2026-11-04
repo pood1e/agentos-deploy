@@ -1,11 +1,11 @@
 {
   "sources": [
     {
-      "url": "https://github.com/kata-containers/kata-containers/releases/download/4.1.0/kata-static-4.1.0-amd64.tar.zst",
+      "url": "https://github.com/kata-containers/kata-containers/releases/download/4.3.1/kata-static-4.3.1-amd64.tar.zst",
       "members": {
         "virtiofsd": "./opt/kata/libexec/virtiofsd",
-        "kata-kernel": "./opt/kata/share/kata-containers/vmlinux-6.18.35-202",
-        "kata-image": "./opt/kata/share/kata-containers/kata-ubuntu-noble.image"
+        "kata-kernel": "./opt/kata/share/kata-containers/vmlinux-6.18.56-208",
+        "kata-image": "./opt/kata/share/kata-containers/kata-ubuntu-resolute.image"
       }
     },
     {
@@ -16,7 +16,7 @@
   "sha256": {
     "cloud-hypervisor": "448af3d4e59b22c2987f7df94c213ad40fb53a10d437e42b5ee6c4fce7c29ecc",
     "virtiofsd": "15b2e72a78cc08a9bd8a6943e89fb69c88cb3cbeb63069efceade835342ac7d4",
-    "kata-kernel": "8e9dbc3a6e4c26adb089d23d31201edebce905c7f3e31aa67b32bdd41df1b86f",
-    "kata-image": "96497f64da1de9c7473fef46c3d29ddd0805d334731cf9d903a21a5b2c33cefb"
+    "kata-kernel": "f87d8359035cb7557b16a319e6431ea09b183e62268aef436bf8dc6530d786b6",
+    "kata-image": "6770db2cca5710593f27c9ac5e1d9d7aab836422695a5e5c4807496a92a0f24d"
   }
 }

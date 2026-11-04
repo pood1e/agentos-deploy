@@ -42,5 +42,5 @@ class WorkspaceDeploymentTest(unittest.TestCase):
             if item and item["kind"] == "RoleBinding"
         }
         for namespace in ("agentos", "team-a"):
-            self.assertIn((namespace, "kagent-getter-rolebinding"), bindings)
-            self.assertIn((namespace, "kagent-writer-rolebinding"), bindings)
+            self.assertIn((namespace, "kagent-reconciliation-rolebinding"), bindings)
+            self.assertIn((namespace, "kagent-management-rolebinding"), bindings)

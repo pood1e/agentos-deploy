@@ -12,10 +12,12 @@ postgres:
   readWriteRole: kagent_owner
   ownerRole: kagent_owner
   schema: substrate
+preview: [GoldenEgressPolicy, PerTemplateSnapshotLocation]
 ateApi:
   authorization:
-    enabled: true
     bootstrapOwners: [system:serviceaccount:ate-system:agentos-substrate-operator]
+atenetRouter:
+  ingressAllowedSPIFFEIDs: ["spiffe://cluster.local/ns/{{ agentos_namespace }}/sa/kagent-controller"]
 credentialProvider:
   namespacePolicies:
     - atespace: "{{ agentos_namespace }}"

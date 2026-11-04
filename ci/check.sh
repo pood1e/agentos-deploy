@@ -8,7 +8,6 @@ ansible-playbook ci/render-values.yaml
 conftest verify --policy tests/policies
 HELM_PLUGINS="$PWD/playbooks/deploy/helm-plugins" \
   AGENTOS_KUSTOMIZE_OVERLAY="$PWD/playbooks/deploy/kustomize/substrate" \
-  AGENTOS_PATCHED_IMAGE="$(python -c 'import yaml; print(yaml.safe_load(open("playbooks/deploy/vars.yaml"))["substrate_api_image"])')" \
   helm template substrate oci://ghcr.io/kagent-dev/substrate/helm/substrate \
   --version "$(python -c 'import yaml; print(yaml.safe_load(open("playbooks/deploy/vars.yaml"))["substrate_version"])')" \
   --post-renderer agentos-kustomize --namespace ate-system \

@@ -13,6 +13,8 @@
 global:
   watchNamespaces: {{ site_workspace_namespaces | to_json }}
 providers: null
+rbac:
+  discoveryServiceAccountTokens: true
 database:
   postgres:
     readWriteConnectionStringSecretRef: {name: kagent-postgres, key: connectionString}
@@ -44,11 +46,8 @@ config:
     readWrite: {role: kagent_owner}
     pool: {maxConns: {{ kagent_postgres_pool_max_conns }}}
     vectorEnabled: true
-  memory:
-    modelConfig: {namespace: "{{ agentos_namespace }}", name: knowledge-embedding}
-    bearerTokenFile: /var/run/kagent-memory/token
   sandboxes:
-    guestImage: ghcr.io/kagent-dev/kagent/sandbox-guest@sha256:5355072effb219e157c3e0471637ca64d1f84ab7513dde23968c20cd65d18c9b
+    guestImage: ghcr.io/kagent-dev/kagent/sandbox-guest@sha256:a908c0ff2378fff97a3ca7e2a4441484bae96d073c0958c98afeb197e24901db
     cpu: "1"
     memory: 1Gi
     defaultTtl: 3600s
@@ -89,13 +88,6 @@ controller:
         secretName: {{ site_identity_secret | to_json }}
         defaultMode: 0440
         items: [{key: client-secret, path: client-secret}]
-    - name: memory-model
-      projected:
-        sources:
-          - serviceAccountToken:
-              path: token
-              audience: "http://{{ app_release_name }}-gateway.{{ agentos_namespace }}.svc.cluster.local:8080"
-              expirationSeconds: 3600
   volumeMounts:
 {% if identity_ca %}
     - {name: identity-ca, mountPath: /etc/kagent/identity-ca, readOnly: true}
@@ -106,7 +98,6 @@ controller:
     - {name: authorization-ca, mountPath: /etc/kagent/authorization-ca, readOnly: true}
 {% endif %}
     - {name: identity-client, mountPath: /etc/kagent/identity, readOnly: true}
-    - {name: memory-model, mountPath: /var/run/kagent-memory, readOnly: true}
   imagePullSecrets: [{name: agentos-registry}]
   substrateClientCertificate:
     enabled: true
@@ -128,9 +119,5 @@ substrateWorkerPool:
         memory: 4Gi
 ui:
   enabled: false
-kmcp:
-  enabled: false
 kagent-tools:
-  enabled: false
-grafana-mcp:
   enabled: false
