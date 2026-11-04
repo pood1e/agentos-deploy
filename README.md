@@ -119,15 +119,14 @@ PATH="$PWD/.cache/venv/bin:$PATH" mise exec -- ci/check.sh
 功能修复先合入 `dev`，验证后由 `dev` 合入 `main`；发行流程仅在 `main` 运行。
 release-please 依据 Conventional Commits 维护版本 PR、`galaxy.yml` 版本、变更记录与 tag。升级平台时更新 `platform.yaml`，并同步运行时版本固定值。
 
-构建仓库以 GitLab CI 定时快进同步 main 与 tag，校验固定平台 Chart 的签名并提取默认值后构建 collection；受保护 tag 发布 `$CI_REGISTRY_IMAGE/collections/platform:<version>`，以 `ci/cosign.pub` 对应的密钥签名，签名属性 `version` / `revision` 为 collection 版本与源码提交。CI 镜像由 [ci/images/Dockerfile](ci/images/Dockerfile) 构建。
+构建仓库以 GitLab CI 定时快进同步 main 与 tag，校验固定平台 Chart 的签名并提取默认值后构建 collection；受保护 tag 发布 `$CI_REGISTRY_IMAGE/collections/platform:<version>`，以 `ci/cosign.pub` 对应的密钥签名，签名属性 `version` / `revision` 为 collection 版本与源码提交。CI 作业运行在 shell runner，工具链由 `mise.lock` 锁定，入口为 [ci/toolchain.sh](ci/toolchain.sh)。
 
 | 构建变量 | 内容 |
 | --- | --- |
+| `AGENTOS_CI_RUNNER` | shell runner 标签，默认 `agentos-shell` |
 | `AGENTOS_PLATFORM_REGISTRY` | 平台制品注册表路径 |
 | `COSIGN_PRIVATE_KEY`、`COSIGN_PASSWORD` | 受保护的 collection 签名私钥文件与隐藏密码 |
 | `AGENTOS_SOURCE_MIRROR_KEY`、`AGENTOS_SOURCE_MIRROR_HOST_KEYS` | 限定 `source-sync` 环境的同步部署密钥与主机公钥 |
-| `AGENTOS_BUILDKIT_RUNNER`、`AGENTOS_BUILDKIT_IMAGE` | rootless BuildKit runner 标签与镜像摘要 |
-| `AGENTOS_REGISTRY_MIRROR` | 可选 Docker Hub 镜像源 |
 
 ## 许可证
 
