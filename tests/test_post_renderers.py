@@ -22,7 +22,7 @@ def resource(kind, name, spec):
     return {"apiVersion": api_version, "kind": kind, "metadata": {"name": name}, "spec": spec}
 
 
-def transform(overlay, resources, image):
+def transform(overlay, resources, image=None):
     with tempfile.TemporaryDirectory() as directory:
         chart = Path(directory)
         (chart / "Chart.yaml").write_text(
@@ -39,7 +39,7 @@ def transform(overlay, resources, image):
                 **os.environ,
                 "HELM_PLUGINS": str(DEPLOY / "helm-plugins"),
                 "AGENTOS_KUSTOMIZE_OVERLAY": str(DEPLOY / "kustomize" / overlay),
-                "AGENTOS_PATCHED_IMAGE": image,
+                **({"AGENTOS_PATCHED_IMAGE": image} if image else {}),
             },
         )
     return {item["metadata"]["name"]: item for item in yaml.safe_load_all(result.stdout)}
@@ -162,16 +162,10 @@ class PostRendererTest(unittest.TestCase):
                 sort_keys=False,
             )
         }
-        result = transform(
-            "substrate",
-            [deployment, service, job, atelet, router],
-            VERSIONS["substrate_api_image"],
-        )
+        result = transform("substrate", [deployment, service, job, atelet, router])
         self.assertEqual(result["other"], service)
         self.assertEqual(result["rustfs-bucket-init"], job)
-        pod = result["ate-api-server"]["spec"]["template"]["spec"]
-        self.assertEqual(pod["containers"][0]["image"], VERSIONS["substrate_api_image"])
-        self.assertEqual(pod["imagePullSecrets"], [{"name": "agentos-registry"}])
+        self.assertEqual(result["ate-api-server"], deployment)
         worker = result["atelet"]["spec"]["template"]["spec"]
         self.assertEqual(
             worker["volumes"],

@@ -5,6 +5,10 @@ gatewayAudiences:
 rules:
   - {resourceType: Session, verbs: [get, list]}
   - {resourceType: Session, verbs: [create, update, delete], anyScope: [agentos-writer]}
+  - resourceType: SessionAllCreators
+    verbs: [get, list]
+    anyScope: [agentos-agents-manage, agentos-skills-manage, agentos-mcp-manage, agentos-models-manage, agentos-harnesses-manage]
+  - {resourceType: Checkpoint, verbs: [get]}
   - {resourceType: Agent, verbs: [get, list]}
   - {resourceType: Agent, verbs: [create, update, delete], anyScope: [agentos-agents-manage]}
   - {resourceType: AgentTemplate, verbs: [get, list]}
@@ -23,6 +27,4 @@ rules:
   - {resourceType: WorkerPool, verbs: [get, list]}
   - {resourceType: TaskStore, verbs: [get, list, create, update]}
   - {resourceType: ToolInventory, verbs: [update]}
-  - {resourceType: Memory, verbs: [get, list, create], anyScope: [agentos-writer]}
-  - {resourceType: TeamMemory, verbs: [get, list]}
-  - {resourceType: TeamMemory, verbs: [create, delete], anyScope: [agentos-knowledge-manage]}
+  - {resourceType: Memory, verbs: [get, list, create, delete], anyScope: [agentos-writer]}

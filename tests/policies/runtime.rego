@@ -60,6 +60,10 @@ deny contains "the controller lacks its native Substrate client certificate" if 
 
 deny contains "global image pull secrets mutate immutable initialization Jobs" if object.get(substrate, "imagePullSecrets", []) != []
 
+deny contains "Substrate lacks the native preparation previews" if {gate | some gate in substrate.preview} != {"GoldenEgressPolicy", "PerTemplateSnapshotLocation"}
+
+deny contains "the Substrate router does not admit the native controller" if substrate.atenetRouter.ingressAllowedSPIFFEIDs != ["spiffe://cluster.local/ns/agentos/sa/kagent-controller"]
+
 deny contains "Substrate infrastructure telemetry requires explicit signal configuration" if {
 	some signal in {"traces", "metrics", "logs"}
 	substrate.otel[signal].enabled != false

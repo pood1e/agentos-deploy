@@ -76,7 +76,7 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 私有 IdP 通过 `identity.caCertificateRef` 引用平台命名空间的 ConfigMap key；同一 CA 用于浏览器、后台委托及原生 OIDC / OAuth。控制端为 Ansible 配置同一 IdP CA 信任。
 
-`kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/agentos/1.0.0-alpha17/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 逐项列出模型与 MCP 网关的精确 HTTP(S) origin，并包含每个环境服务的 `http://<environment>-<project>-mcp-gateway.<namespace>.svc.cluster.local:8080`，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单。
+`kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/3aef1d9ec59727858a63be8ac6108f4cbf2b2a4d/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 逐项列出模型与 MCP 网关的精确 HTTP(S) origin，并包含每个环境服务的 `http://<environment>-<project>-mcp-gateway.<namespace>.svc.cluster.local:8080`，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单；`SessionAllCreators` 授予平台管理角色读取其他发起人的 Session，与控制台系统执行视图一致。
 
 站点从已校验的 kagent Chart 读取原生授权模型，在独立 OpenFGA PostgreSQL 集群和 store 中安装模型；store、model ID 与已引导的工作空间 UID 保存在 `openfga-state` ConfigMap。每个新工作空间首次授予初始主体成员与授权管理员角色，业务角色和管理员轮换通过原生绑定接口配置。升级按模型摘要更新，已有工作空间的绑定由授权接口管理。collection 为 kagent 配置该 store，并从独立 Secret 挂载 OpenFGA API 凭据与 CA。
 
@@ -86,7 +86,7 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 站点在 `route.hosts.api` 发布原生 `/agents/` A2A HTTP，以及 A2A、Session、Execution 的 gRPC 服务，使用 h2c Service 转发至原生控制面。入口 NetworkPolicy 复用 `route.from`，默认仅允许 K3s Traefik；原生 OIDC、资源权限与执行归属共同约束外部调用。
 
-团队记忆由 kagent 调用 `knowledge-embedding` ModelConfig 生成嵌入；controller 挂载面向模型网关的轮换 ServiceAccount Token。站点按 Kubernetes 官方方式向网关开放 ServiceAccount issuer discovery 与公开 JWKS，TLS 信任使用集群 CA。MCP 发现凭据由各 RemoteMCPServer 的原生 `discoveryAuth` 管理。
+MCP 发现凭据由各 RemoteMCPServer 的原生 `discoveryAuth` 管理，controller 按引用的 ServiceAccount 签发短期 Token。站点按 Kubernetes 官方方式向网关开放 ServiceAccount issuer discovery 与公开 JWKS，TLS 信任使用集群 CA。
 
 ```yaml
 kagent_telemetry:

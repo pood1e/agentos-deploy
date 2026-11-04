@@ -1,4 +1,4 @@
-apiVersion: ate.dev/v1alpha1
+apiVersion: ate.dev/v1
 kind: SandboxConfig
 metadata:
   name: microvm
@@ -18,7 +18,7 @@ spec:
             sha256: 15b2e72a78cc08a9bd8a6943e89fb69c88cb3cbeb63069efceade835342ac7d4
           kata-kernel:
             url: s3://ate-snapshots/kata-assets/kata-kernel
-            sha256: 8e9dbc3a6e4c26adb089d23d31201edebce905c7f3e31aa67b32bdd41df1b86f
+            sha256: f87d8359035cb7557b16a319e6431ea09b183e62268aef436bf8dc6530d786b6
           kata-image:
             url: s3://ate-snapshots/kata-assets/kata-image
-            sha256: 96497f64da1de9c7473fef46c3d29ddd0805d334731cf9d903a21a5b2c33cefb
+            sha256: 6770db2cca5710593f27c9ac5e1d9d7aab836422695a5e5c4807496a92a0f24d

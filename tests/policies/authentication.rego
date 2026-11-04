@@ -56,16 +56,14 @@ native_invocation_authentication if {
  native_config.server.auth.serviceAccount.authority == "kubernetes"
 }
 
-deny contains "native memory must use a rotating model credential" if not native_memory_credential
+deny contains "native MCP discovery cannot mint ServiceAccount tokens" if not native_discovery_tokens
 
-native_memory_credential if {
-	volume := native_controller.spec.template.spec.volumes[_]
-	volume.name == "memory-model"
-	volume.projected.sources == [{"serviceAccountToken": {"path": "token", "audience": "http://agentos-gateway.agentos.svc.cluster.local:8080", "expirationSeconds": 3600}}]
-	native_config.memory == {"modelConfig": {"namespace": "agentos", "name": "knowledge-embedding"}, "bearerTokenFile": "/var/run/kagent-memory/token"}
-	container := native_controller.spec.template.spec.containers[_]
-	container.name == "controller"
-	container.volumeMounts[_] == {"name": "memory-model", "mountPath": "/var/run/kagent-memory", "readOnly": true}
+native_discovery_tokens if {
+	some file in input
+	file.contents.kind in {"Role", "ClusterRole"}
+	some rule in file.contents.rules
+	"serviceaccounts/token" in rule.resources
+	"create" in rule.verbs
 }
 
 deny contains "native OIDC and OAuth renewal must share private IdP trust" if {
