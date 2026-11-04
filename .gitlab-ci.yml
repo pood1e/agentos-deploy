@@ -2,11 +2,11 @@ stages: [verify, release]
 
 variables:
   FF_ENABLE_JOB_CLEANUP: "true"
-  AGENTOS_CI_RUNNER: agentos-container
+  AGENTOS_CI_RUNNER: agentos-shell
 
 default:
-  image: $CI_REGISTRY_IMAGE/ci/tools@sha256:6de0c051a7dfc9b8a6bc482c24dd1e6a9c1d6237f2e7a1a48da0a7f0d978a223
   tags: [$AGENTOS_CI_RUNNER]
+  before_script: [source ci/toolchain.sh]
   interruptible: true
 
 workflow:
@@ -25,26 +25,10 @@ source-sync:
     GIT_SSH_COMMAND: >-
       ssh -F /dev/null -i $AGENTOS_SOURCE_MIRROR_KEY -o IdentitiesOnly=yes
       -o UserKnownHostsFile=$AGENTOS_SOURCE_MIRROR_HOST_KEYS -o StrictHostKeyChecking=yes
-  before_script: [chmod 600 "$AGENTOS_SOURCE_MIRROR_KEY"]
+  before_script:
+    - source ci/toolchain.sh
+    - chmod 600 "$AGENTOS_SOURCE_MIRROR_KEY"
   script: [python ci/source-sync.py]
-
-build-ci-tools:
-  stage: verify
-  needs: []
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_TAG
-      when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes: &ci-tools [mise.toml, mise.lock, requirements.txt, ci/requirements.txt, ci/collections.yaml, ci/images/**/*]
-    - changes:
-        paths: *ci-tools
-        compare_to: refs/heads/main
-  tags: [$AGENTOS_BUILDKIT_RUNNER]
-  image:
-    name: $AGENTOS_BUILDKIT_IMAGE
-    entrypoint: [""]
-  resource_group: agentos-deploy-ci-tools
-  script: [ci/build-image.sh]
 
 package:
   stage: verify
