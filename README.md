@@ -48,6 +48,7 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 | `app_release_name`、`agentos_namespace` | release 与命名空间，均默认 `agentos` |
 | `agentos_cache` | 缓存目录，默认 `$XDG_CACHE_HOME/agentos` 或 `~/.cache/agentos` |
 | `node_hosts` | 可选节点 hosts 记录 `{name, address}` |
+| `node_dns_servers`、`node_dns_over_tls` | 节点与 Pod 的上游 DNS 及是否使用 DNS over TLS，默认 Cloudflare `1.1.1.1` / `1.0.0.1` 加 DoT；需要解析内网域名的站点改用内网解析器 |
 | `ingress_ports` | K3s 内置 Traefik 在节点上暴露的 `{http, https}` 端口，默认 `80` / `443`；节点已有其他入口时改用空闲端口，由该入口按 SNI 透传 |
 | `kagent_telemetry` | 可选 kagent 原生 `TelemetryConfig`，应用于控制面与运行时默认值 |
 | `openfga_bootstrap_subject` | 初始管理员的 OIDC `sub`；站点以当前工作空间 UID 建立成员与管理员绑定 |
