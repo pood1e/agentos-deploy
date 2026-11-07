@@ -38,9 +38,9 @@
 
     - name: Download pinned K3s binary
       ansible.builtin.get_url:
-        url: "https://github.com/k3s-io/k3s/releases/download/{{ k3s_version | urlencode }}/k3s"
+        url: "https://github.com/k3s-io/k3s/releases/download/{{ k3s_version | urlencode }}/k3s{{ '' if node_arch == 'amd64' else '-' ~ node_arch }}"
         dest: /usr/local/bin/k3s
-        checksum: "{{ k3s_checksum }}"
+        checksum: "{{ k3s_checksums[node_arch] }}"
         mode: "0755"
         timeout: 300
       notify: Restart K3s
@@ -100,12 +100,17 @@
                   enabled: true
               gateway:
                 enabled: false
+              ports:
+                web:
+                  exposedPort: {{ ingress_ports.http }}
+                websecure:
+                  exposedPort: {{ ingress_ports.https }}
 
     - name: Download Agent Substrate CLI
       ansible.builtin.get_url:
-        url: "https://github.com/kagent-dev/substrate/releases/download/v{{ substrate_version }}/kubectl-ate-linux-amd64"
+        url: "https://github.com/kagent-dev/substrate/releases/download/v{{ substrate_version }}/kubectl-ate-linux-{{ node_arch }}"
         dest: /usr/local/bin/kubectl-ate
-        checksum: "{{ kubectl_ate_checksum }}"
+        checksum: "{{ kubectl_ate_checksums[node_arch] }}"
         mode: "0755"
         timeout: 300
 

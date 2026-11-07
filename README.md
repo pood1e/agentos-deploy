@@ -1,6 +1,6 @@
 # AgentOS 参考部署
 
-Ansible collection `agentos.platform`，在支持 KVM 的 Ubuntu 主机安装单节点 K3s、Agent Substrate、kagent、agentgateway 与 [AgentOS 平台](https://github.com/pood1e/agentos-platform) Chart，并接入目标环境。
+Ansible collection `agentos.platform`，在支持 KVM 的 Ubuntu 主机（amd64 或 arm64）安装单节点 K3s、Agent Substrate、kagent、agentgateway 与 [AgentOS 平台](https://github.com/pood1e/agentos-platform) Chart，并接入目标环境。
 每个版本固定一个已签名的平台版本，见 [platform.yaml](platform.yaml)；上游版本与运行时镜像摘要见 [playbooks/deploy/vars.yaml](playbooks/deploy/vars.yaml)。
 
 | 入口 | 作用 |
@@ -48,6 +48,7 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 | `app_release_name`、`agentos_namespace` | release 与命名空间，均默认 `agentos` |
 | `agentos_cache` | 缓存目录，默认 `$XDG_CACHE_HOME/agentos` 或 `~/.cache/agentos` |
 | `node_hosts` | 可选节点 hosts 记录 `{name, address}` |
+| `ingress_ports` | K3s 内置 Traefik 在节点上暴露的 `{http, https}` 端口，默认 `80` / `443`；节点已有其他入口时改用空闲端口，由该入口按 SNI 透传 |
 | `kagent_telemetry` | 可选 kagent 原生 `TelemetryConfig`，应用于控制面与运行时默认值 |
 | `openfga_bootstrap_subject` | 初始管理员的 OIDC `sub`；站点以当前工作空间 UID 建立成员与管理员绑定 |
 | `kagent_authorization_api_token_secret`、`kagent_authorization_ca_secret` | OpenFGA API 凭据和 CA 的 Secret `{name, key}`，默认分别为 `openfga-auth/keys` 与 `openfga-ca/tls.crt` |
@@ -76,7 +77,7 @@ collection 固化 `delivery_version`、`delivery_revision` 与 `agentos_image_re
 
 私有 IdP 通过 `identity.caCertificateRef` 引用平台命名空间的 ConfigMap key；同一 CA 用于浏览器、后台委托及原生 OIDC / OAuth。控制端为 Ansible 配置同一 IdP CA 信任。
 
-`kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/bfbd869818d519bd90fdb1728997d28e897720c5/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 逐项列出模型与 MCP 网关的精确 HTTP(S) origin，并包含每个环境服务的 `http://<environment>-<project>-mcp-gateway.<namespace>.svc.cluster.local:8080`，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单；`SessionAllCreators` 授予平台管理角色读取其他发起人的 Session，与控制台系统执行视图一致。
+`kagent_execution_authorization` 直接采用[原生配置](https://github.com/pood1e/kagent/blob/0cab2df399250617c557de0c228e15c4998971a4/proto/kagent/config/v1/config.proto)；`rules` 声明资源、动词与允许的角色，`gatewayAudiences` 逐项列出模型与 MCP 网关的精确 HTTP(S) origin，并包含每个环境服务的 `http://<environment>-<project>-mcp-gateway.<namespace>.svc.cluster.local:8080`，与对应 Actor 凭据的受众一致。部署填入加密密钥和 OAuth Secret 路径。示例见[原生执行权限测试值](tests/fixtures/execution-authorization.yaml)，站点按启用的资源与网关补齐允许清单；`SessionAllCreators` 授予平台管理角色读取其他发起人的 Session，与控制台系统执行视图一致。
 
 站点从已校验的 kagent Chart 读取原生授权模型，在独立 OpenFGA PostgreSQL 集群和 store 中安装模型；store、model ID 与已引导的工作空间 UID 保存在 `openfga-state` ConfigMap。每个新工作空间首次授予初始主体成员与授权管理员角色，业务角色和管理员轮换通过原生绑定接口配置。升级按模型摘要更新，已有工作空间的绑定由授权接口管理。collection 为 kagent 配置该 store，并从独立 Secret 挂载 OpenFGA API 凭据与 CA。
 

@@ -1,4 +1,4 @@
-# Stages the pinned micro-VM assets listed in the manifest into the output directory.
+# Stages the pinned micro-VM assets of one architecture into the output directory.
 # Each source is downloaded completely before it is unpacked: unpacking is slower
 # than the download, and a connection held open by a slow reader gets cut.
 import hashlib
@@ -10,7 +10,7 @@ import tarfile
 import tempfile
 import urllib.request
 
-manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())
+manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())[sys.argv[3]]
 out = pathlib.Path(sys.argv[2])
 for source in manifest["sources"]:
     with tempfile.TemporaryFile() as download:
