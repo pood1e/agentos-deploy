@@ -16,9 +16,9 @@
     mode: "0644"
     content: |
       [Resolve]
-      DNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com
+      DNS={{ node_dns_servers | join(' ') }}
       Domains=~.
-      DNSOverTLS=yes
+      DNSOverTLS={{ 'yes' if node_dns_over_tls else 'no' }}
       DNSStubListenerExtra={{ ansible_host }}
   notify: Restart resolver
 
