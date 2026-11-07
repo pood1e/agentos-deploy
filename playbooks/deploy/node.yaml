@@ -5,7 +5,8 @@
   tasks:
     - name: Install host dependencies
       ansible.builtin.apt:
-        name: [ca-certificates, curl, openssl, jq, qemu-guest-agent, python3]
+        name: "{{ ['ca-certificates', 'curl', 'openssl', 'jq', 'python3']
+                  + (['qemu-guest-agent'] if ansible_virtualization_role == 'guest' else []) }}"
         state: present
         update_cache: true
         cache_valid_time: 3600
@@ -15,6 +16,7 @@
         name: qemu-guest-agent
         state: started
         enabled: true
+      when: ansible_virtualization_role == 'guest'
 
     - name: Create K3s configuration directory
       ansible.builtin.file:
