@@ -1,6 +1,6 @@
 # AgentOS 参考部署
 
-Ansible collection `agentos.platform`，在支持 KVM 的 Ubuntu 主机安装单节点 K3s、Agent Substrate、kagent、agentgateway 与 [AgentOS 平台](https://github.com/pood1e/agentos-platform) Chart，并接入目标环境。
+Ansible collection `agentos.platform`，在支持 KVM 的 Ubuntu 主机（amd64 或 arm64）安装单节点 K3s、Agent Substrate、kagent、agentgateway 与 [AgentOS 平台](https://github.com/pood1e/agentos-platform) Chart，并接入目标环境。
 每个版本固定一个已签名的平台版本，见 [platform.yaml](platform.yaml)；上游版本与运行时镜像摘要见 [playbooks/deploy/vars.yaml](playbooks/deploy/vars.yaml)。
 
 | 入口 | 作用 |
@@ -48,6 +48,7 @@ ansible-playbook agentos.platform.install -i <site>/inventory.yaml -e @<site>/va
 | `app_release_name`、`agentos_namespace` | release 与命名空间，均默认 `agentos` |
 | `agentos_cache` | 缓存目录，默认 `$XDG_CACHE_HOME/agentos` 或 `~/.cache/agentos` |
 | `node_hosts` | 可选节点 hosts 记录 `{name, address}` |
+| `ingress_ports` | K3s 内置 Traefik 在节点上暴露的 `{http, https}` 端口，默认 `80` / `443`；节点已有其他入口时改用空闲端口，由该入口按 SNI 透传 |
 | `kagent_telemetry` | 可选 kagent 原生 `TelemetryConfig`，应用于控制面与运行时默认值 |
 | `openfga_bootstrap_subject` | 初始管理员的 OIDC `sub`；站点以当前工作空间 UID 建立成员与管理员绑定 |
 | `kagent_authorization_api_token_secret`、`kagent_authorization_ca_secret` | OpenFGA API 凭据和 CA 的 Secret `{name, key}`，默认分别为 `openfga-auth/keys` 与 `openfga-ca/tls.crt` |
