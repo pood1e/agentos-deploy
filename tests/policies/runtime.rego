@@ -12,6 +12,11 @@ substrate := file.contents if {
 	endswith(file.path, "substrate-values.yaml")
 }
 
+atelet := file.contents if {
+	some file in input
+	endswith(file.path, "atelet-values.yaml")
+}
+
 native_config := yaml.unmarshal(file.contents.data["controller.yaml"]) if {
 	some file in input
 	file.contents.kind == "ConfigMap"
@@ -69,7 +74,13 @@ deny contains "Substrate infrastructure telemetry requires explicit signal confi
 	substrate.otel[signal].enabled != false
 }
 
-provider := yaml.unmarshal(substrate.atelet.imageCredentialProviderConfigYAML).providers[0]
+deny contains "Substrate still renders Atelet outside its own release" if substrate.atelet.enabled != false
+
+deny contains "Atelet lacks the native preparation previews" if {gate | some gate in atelet.preview} != {"GoldenEgressPolicy", "PerTemplateSnapshotLocation"}
+
+deny contains "Atelet does not read the Substrate object store credentials" if atelet.objectStore.credentialsSecret != "substrate-object-store"
+
+provider := yaml.unmarshal(atelet.atelet.imageCredentialProviderConfigYAML).providers[0]
 
 deny contains "credential provider does not cover the configured image registries" if {image | some image in provider.matchImages} != {"registry.example.com", "harness.example.com"}
 

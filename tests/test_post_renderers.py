@@ -121,17 +121,6 @@ class PostRendererTest(unittest.TestCase):
             },
         )
         job["metadata"]["annotations"] = {"helm.sh/hook": "pre-install,pre-upgrade"}
-        atelet = resource(
-            "DaemonSet",
-            "atelet",
-            {
-                "template": {
-                    "spec": {
-                        "containers": [{"name": "atelet", "image": "upstream"}],
-                    }
-                }
-            },
-        )
         router = resource("ConfigMap", "atenet-router-agentgateway-config", {})
         router.pop("spec")
         policies = {"substrateIngress": {"host": "api:443"}}
@@ -162,10 +151,40 @@ class PostRendererTest(unittest.TestCase):
                 sort_keys=False,
             )
         }
-        result = transform("substrate", [deployment, service, job, atelet, router])
+        result = transform("substrate", [deployment, service, job, router])
         self.assertEqual(result["other"], service)
         self.assertEqual(result["rustfs-bucket-init"], job)
         self.assertEqual(result["ate-api-server"], deployment)
+        configuration = yaml.safe_load(
+            result["atenet-router-agentgateway-config"]["data"]["config.yaml"]
+        )
+        for route in [
+            configuration["routes"][0],
+            configuration["binds"][0]["listeners"][0]["routes"][0],
+        ]:
+            self.assertEqual(
+                route["policies"]["substrateIngress"],
+                {
+                    "host": "api:443",
+                    "requestParking": {"budget": "2m"},
+                },
+            )
+
+    def test_atelet_mounts_the_projected_image_credentials(self):
+        atelet = resource(
+            "DaemonSet",
+            "atelet",
+            {
+                "template": {
+                    "spec": {
+                        "containers": [{"name": "atelet", "image": "upstream"}],
+                    }
+                }
+            },
+        )
+        service = resource("Service", "other", {"ports": [{"port": 8080}]})
+        result = transform("atelet", [atelet, service])
+        self.assertEqual(result["other"], service)
         worker = result["atelet"]["spec"]["template"]["spec"]
         self.assertEqual(
             worker["volumes"],
@@ -189,20 +208,6 @@ class PostRendererTest(unittest.TestCase):
                 }
             ],
         )
-        configuration = yaml.safe_load(
-            result["atenet-router-agentgateway-config"]["data"]["config.yaml"]
-        )
-        for route in [
-            configuration["routes"][0],
-            configuration["binds"][0]["listeners"][0]["routes"][0],
-        ]:
-            self.assertEqual(
-                route["policies"]["substrateIngress"],
-                {
-                    "host": "api:443",
-                    "requestParking": {"budget": "2m"},
-                },
-            )
 
 
 if __name__ == "__main__":

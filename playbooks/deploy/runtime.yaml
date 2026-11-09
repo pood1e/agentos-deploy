@@ -59,21 +59,6 @@
         apply:
           tags: [substrate]
 
-    - name: Install Agent Substrate
-      tags: [substrate]
-      kubernetes.core.helm:
-        name: substrate
-        chart_ref: oci://ghcr.io/kagent-dev/substrate/helm/substrate
-        chart_version: "{{ substrate_version }}"
-        release_namespace: ate-system
-        release_values: "{{ lookup('template', 'values/substrate.yaml.j2') | from_yaml }}"
-        post_renderer: agentos-kustomize
-        wait: false
-        timeout: 10m
-      environment:
-        PATH: "{{ ansible_python_interpreter | dirname }}:{{ lookup('env', 'PATH') }}"
-        AGENTOS_KUSTOMIZE_OVERLAY: "{{ playbook_dir }}/kustomize/substrate"
-
     - name: Prepare certificate controller namespace
       kubernetes.core.k8s:
         state: present
@@ -119,6 +104,50 @@
         release_namespace: podcertificate-controller-system
         wait: true
         timeout: 5m
+
+    - name: Provide the Substrate object store to Atelet
+      tags: [substrate]
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata: {name: substrate-object-store, namespace: ate-system}
+          type: Opaque
+          stringData:
+            AWS_ACCESS_KEY_ID: "{{ substrate_object_store.access_key }}"
+            AWS_SECRET_ACCESS_KEY: "{{ substrate_object_store.secret_key }}"
+      no_log: true
+
+    - name: Install Substrate Atelet
+      tags: [substrate]
+      kubernetes.core.helm:
+        name: substrate-atelet
+        chart_ref: oci://ghcr.io/kagent-dev/substrate/helm/substrate-atelet
+        chart_version: "{{ substrate_version }}"
+        release_namespace: ate-system
+        release_values: "{{ lookup('template', 'values/atelet.yaml.j2') | from_yaml }}"
+        post_renderer: agentos-kustomize
+        wait: true
+        timeout: 10m
+      environment:
+        PATH: "{{ ansible_python_interpreter | dirname }}:{{ lookup('env', 'PATH') }}"
+        AGENTOS_KUSTOMIZE_OVERLAY: "{{ playbook_dir }}/kustomize/atelet"
+
+    - name: Install Agent Substrate
+      tags: [substrate]
+      kubernetes.core.helm:
+        name: substrate
+        chart_ref: oci://ghcr.io/kagent-dev/substrate/helm/substrate
+        chart_version: "{{ substrate_version }}"
+        release_namespace: ate-system
+        release_values: "{{ lookup('template', 'values/substrate.yaml.j2') | from_yaml }}"
+        post_renderer: agentos-kustomize
+        wait: false
+        timeout: 10m
+      environment:
+        PATH: "{{ ansible_python_interpreter | dirname }}:{{ lookup('env', 'PATH') }}"
+        AGENTOS_KUSTOMIZE_OVERLAY: "{{ playbook_dir }}/kustomize/substrate"
 
     - name: Read actor identity root certificate
       ansible.builtin.command:
