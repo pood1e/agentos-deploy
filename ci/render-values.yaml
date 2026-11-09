@@ -108,7 +108,7 @@
         src: "../playbooks/deploy/values/{{ item }}.yaml.j2"
         dest: "{{ output }}/{{ item }}-values.yaml"
         mode: "0600"
-      loop: [kagent, substrate]
+      loop: [kagent, substrate, atelet]
 
     - name: Render multi-workspace native values
       ansible.builtin.template:

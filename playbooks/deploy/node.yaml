@@ -18,6 +18,16 @@
         enabled: true
       when: ansible_virtualization_role == 'guest'
 
+    - name: Raise inotify limits for node agents
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        sysctl_file: /etc/sysctl.d/90-agentos.conf
+        sysctl_set: true
+      loop:
+        - {name: fs.inotify.max_user_instances, value: "8192"}
+        - {name: fs.inotify.max_user_watches, value: "524288"}
+
     - name: Create K3s configuration directory
       ansible.builtin.file:
         path: /etc/rancher/k3s
