@@ -110,13 +110,7 @@ substrateWorkerPool:
   template:
     nodeSelector:
       ate.dev/substrate-version: "v{{ substrate_version }}"
-    resources:
-      requests:
-        cpu: 500m
-        memory: 4Gi
-      limits:
-        cpu: "4"
-        memory: 4Gi
+    resources: {{ substrate_worker_resources | to_json }}
 ui:
   enabled: false
 kagent-tools:

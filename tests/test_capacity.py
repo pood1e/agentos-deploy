@@ -1,4 +1,4 @@
-"""Render native PostgreSQL capacity through the production Ansible values."""
+"""Render native PostgreSQL and worker capacity through the production Ansible values."""
 
 import json
 import subprocess
@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEPLOY = ROOT / "playbooks/deploy"
 
 
-class DatabaseCapacityTest(unittest.TestCase):
+class CapacityTest(unittest.TestCase):
     def test_default_and_site_capacity_are_rendered(self):
         defaults = yaml.safe_load((DEPLOY / "vars.yaml").read_text())
         tasks = yaml.safe_load((DEPLOY / "database/cluster.yaml").read_text())
@@ -22,12 +22,21 @@ class DatabaseCapacityTest(unittest.TestCase):
             "requests": {"cpu": "250m", "memory": "1Gi"},
             "limits": {"cpu": "2", "memory": "4Gi"},
         }
-        for overrides, expected_resources, expected_pool in (
-            ({}, defaults["kagent_postgres_resources"], 16),
+        workers = {
+            "requests": {"cpu": "500m", "memory": "8Gi"},
+            "limits": {"cpu": "8", "memory": "8Gi"},
+        }
+        for overrides, expected_resources, expected_pool, expected_workers in (
+            ({}, defaults["kagent_postgres_resources"], 16, defaults["substrate_worker_resources"]),
             (
-                {"kagent_postgres_resources": expanded, "kagent_postgres_pool_max_conns": 8},
+                {
+                    "kagent_postgres_resources": expanded,
+                    "kagent_postgres_pool_max_conns": 8,
+                    "substrate_worker_resources": workers,
+                },
                 expanded,
                 8,
+                workers,
             ),
         ):
             with self.subTest(overrides=overrides), tempfile.TemporaryDirectory() as directory:
@@ -90,6 +99,9 @@ class DatabaseCapacityTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 values = yaml.safe_load((output / "values.yaml").read_text())
                 self.assertEqual(values["config"]["database"]["pool"]["maxConns"], expected_pool)
+                self.assertEqual(
+                    values["substrateWorkerPool"]["template"]["resources"], expected_workers
+                )
                 self.assertEqual(
                     json.loads((output / "resources.json").read_text()), expected_resources
                 )
