@@ -1,6 +1,6 @@
 namespace: agentos
 name: platform
-version: 2.0.4-dev.10
+version: 2.0.4-dev.11
 readme: README.md
 authors:
   - AgentOS
